@@ -21,7 +21,7 @@ open import Category.Monad.Partiality hiding (map)
 data [_] {a} (A : Set a) : Set a where
   []    : [ A ]
   _∷_   : (x : A) (xs : ∞ [ A ]) → [ A ]
-  later : (x : ∞ [ A ]) → [ A ]
+  later : (xs : ∞ [ A ]) → [ A ]
 
 infixr 5 _++_
 
@@ -93,6 +93,20 @@ module WithBool where
   ... | true          = x   ∷  ♯ filter p (♭ xs)
   ... | false         = later (♯ filter p (♭ xs))
   filter p (later xs) = later (♯ filter p (♭ xs))
+
+  any : ∀ {a} {A : Set a} → (A → Bool) → [ A ] → Bool ⊥
+  any p [] = now false
+  any p (x ∷ xs) with p x
+  any p (x ∷ xs) | true  = now true
+  any p (x ∷ xs) | false = later (♯ (any p (♭ xs)))
+  any p (later xs) = later (♯ any p (♭ xs))
+
+  all : ∀ {a} {A : Set a} → (A → Bool) → [ A ] → Bool ⊥
+  all p [] = now true
+  all p (x ∷ xs) with p x
+  all p (x ∷ xs) | true  = later (♯ (any p (♭ xs)))
+  all p (x ∷ xs) | false = now false
+  all p (later xs) = later (♯ any p (♭ xs))
 
   open import Data.Maybe
 
