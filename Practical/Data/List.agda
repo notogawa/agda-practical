@@ -94,6 +94,16 @@ module WithBool where
   ... | false         = later (♯ filter p (♭ xs))
   filter p (later xs) = later (♯ filter p (♭ xs))
 
+  open import Data.Maybe
+
+  listToMaybe : ∀ {a} {A : Set a} → [ A ] → Maybe A ⊥
+  listToMaybe []         = now nothing
+  listToMaybe (x ∷ xs)   = now (just x)
+  listToMaybe (later xs) = later (♯ listToMaybe (♭ xs))
+
+  find : ∀ {a} {A : Set a} → (A → Bool) → [ A ] → Maybe A ⊥
+  find p = listToMaybe ∘ filter p
+
 open WithBool public
 
 module WithConat where
