@@ -10,6 +10,11 @@
 -- また，そういう構成子laterを持っているという性質を
 -- クラスのように扱えなければならない
 --
+-- どこで使うかによっても何が現れるかが違う．具体的には
+-- filter では [ A ] → [ A ] だけど，
+-- nubBy  だと [ A ] → List A ⊥ でいい
+-- list of list 等だと，どこにlaterを吸収させるかで性質が変わるかも
+--
 module Practical.Data.List where
 
 open import Function
