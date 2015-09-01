@@ -143,6 +143,22 @@ module WithList where
   drop (suc n) (x ∷ xs)   = later (♯ (drop n (♭ xs)))
   drop (suc n) (later xs) = later (♯ (drop (suc n) (♭ xs)))
 
+  open import Data.Bool
+
+  takeWhile : ∀ {a} {A : Set a} → (A → Bool) → [ A ] → [ A ]
+  takeWhile p [] = []
+  takeWhile p (x ∷ xs) with p x
+  takeWhile p (x ∷ xs) | true  = x ∷ (♯ (takeWhile p (♭ xs)))
+  takeWhile p (x ∷ xs) | false = []
+  takeWhile p (later x) = later (♯ takeWhile p (♭ x))
+
+  dropWhile : ∀ {a} {A : Set a} → (A → Bool) → [ A ] → [ A ]
+  dropWhile p [] = []
+  dropWhile p (x ∷ xs) with p x
+  dropWhile p (x ∷ xs) | true  = later (♯ (dropWhile p (♭ xs)))
+  dropWhile p (x ∷ xs) | false = []
+  dropWhile p (later x) = later (♯ dropWhile p (♭ x))
+
 open WithList public
 
 module WithColist where
