@@ -50,24 +50,21 @@ zipWith f _          (now [])           = now []
 zipWith f (later xs) ys                 = later (♯ (zipWith f (♭ xs) ys))
 zipWith f xs         (later ys)         = later (♯ (zipWith f xs (♭ ys)))
 zipWith f (now (x ∷ xs)) (now (y ∷ ys)) = now (f x y ∷ zipWith f xs ys)
-{-
+
 module WithProduct where
   open import Data.Product hiding (zip)
 
   -- 「later : (x : ∞ A) → A を構成子に持っている型A」みたいなのが取り出せる必要がある
-  -- なんかこのfoldrはダメな気がするがcがどんな関数かわからないのでしょうがない
-  foldr : ∀ {a b} {A : Set a} {B : Set b} → (A → B ⊥ → B ⊥) → B ⊥ → [ A ] → B ⊥
-  foldr c = go c (id , c) where
-    go : ∀ {a b} {A : Set a} {B : Set b} → (A → B ⊥ → B ⊥) → ((B ⊥ → B ⊥) × (A → B ⊥ → B ⊥)) → B ⊥ → [ A ] → B ⊥
-    go c (proj₁ , proj₂) n (now []) = proj₁ n
-    go c (proj₁ , proj₂) n (now (x ∷ xs)) = later (♯ go c ((proj₂ x) , (λ y → proj₂ x ∘ c y)) n (♭ xs))
-    go c p n (later x)              = later (♯ (go c p n (♭ x)))
+--  foldr : ∀ {a b} {A : Set a} {B : Set b} → (A → B ⊥ → B ⊥) → B ⊥ → [ A ] → B ⊥
+--  foldr c n (now []) = n
+--  foldr c n (now (x ∷ xs)) = c x (later (♯ (foldr c n xs)))
+--  foldr c n (later x) = later (♯ (foldr c n (♭ x)))
 
   zip : ∀ {a b} {A : Set a} {B : Set b} → [ A ] → [ B ] → [ A × B ]
   zip = zipWith (_,_)
 
 open WithProduct public
--}
+
 foldl : ∀ {a b} {A : Set a} {B : Set b} → (A ⊥ → B → A ⊥) → A ⊥ → [ B ] → A ⊥
 foldl c n (now [])       = n
 foldl c n (now (x ∷ xs)) = foldl c (c n x) xs
@@ -85,20 +82,19 @@ map f (now [])         = now []
 map f (now (x ∷ xs))   = now (f x ∷ map f xs)
 map f (later xs) = later (♯ map f (♭ xs))
 
-{-
 concatMap : ∀ {a b} {A : Set a} {B : Set b} → (A → [ B ]) → [ A ] → [ B ]
 concatMap f = concat ∘ map f
 
 monad : ∀ {a} → RawMonad {a} [_]
 monad = record
-  { return = λ x → x ∷ ♯ []
+  { return = λ x → now (x ∷ now [])
   ; _>>=_ = λ xs f → concatMap f xs
   }
 
 monadZero : ∀ {a} → RawMonadZero {a} [_]
 monadZero = record
   { monad = monad
-  ; ∅     = []
+  ; ∅     = now []
   }
 
 monadPlus : ∀ {a} → RawMonadPlus {a} [_]
@@ -111,36 +107,36 @@ module WithBool where
   open import Data.Bool using (Bool; true; false)
 
   null : ∀ {a} {A : Set a} → [ A ] → Bool ⊥
-  null []         = now true
-  null (_ ∷ _)    = now false
+  null (now [])         = now true
+  null (now (_ ∷ _))    = now false
   null (later xs) = later (♯ null (♭ xs))
 
   filter : ∀ {a} {A : Set a} → (A → Bool) → [ A ] → [ A ]
-  filter p []         = []
-  filter p (x ∷ xs) with p x
-  ... | true          = x   ∷  ♯ filter p (♭ xs)
-  ... | false         = later (♯ filter p (♭ xs))
+  filter p (now [])         = now []
+  filter p (now (x ∷ xs)) with p x
+  ... | true          = now (x   ∷  filter p xs)
+  ... | false         = later (♯ filter p xs)
   filter p (later xs) = later (♯ filter p (♭ xs))
 
   any : ∀ {a} {A : Set a} → (A → Bool) → [ A ] → Bool ⊥
-  any p [] = now false
-  any p (x ∷ xs) with p x
-  any p (x ∷ xs) | true  = now true
-  any p (x ∷ xs) | false = later (♯ (any p (♭ xs)))
+  any p (now []) = now false
+  any p (now (x ∷ xs)) with p x
+  ... | true  = now true
+  ... | false = later (♯ any p xs)
   any p (later xs) = later (♯ any p (♭ xs))
 
   all : ∀ {a} {A : Set a} → (A → Bool) → [ A ] → Bool ⊥
-  all p [] = now true
-  all p (x ∷ xs) with p x
-  all p (x ∷ xs) | true  = later (♯ (any p (♭ xs)))
-  all p (x ∷ xs) | false = now false
+  all p (now []) = now true
+  all p (now (x ∷ xs)) with p x
+  ... | true  = later (♯ any p xs)
+  ... | false = now false
   all p (later xs) = later (♯ any p (♭ xs))
 
   open import Data.Maybe
 
   listToMaybe : ∀ {a} {A : Set a} → [ A ] → Maybe A ⊥
-  listToMaybe []         = now nothing
-  listToMaybe (x ∷ xs)   = now (just x)
+  listToMaybe (now [])         = now nothing
+  listToMaybe (now (x ∷ xs))   = now (just x)
   listToMaybe (later xs) = later (♯ listToMaybe (♭ xs))
 
   find : ∀ {a} {A : Set a} → (A → Bool) → [ A ] → Maybe A ⊥
@@ -156,14 +152,14 @@ module WithConat where
   --   open RawMonad (Category.Monad.Partiality.monad) using (_<$>_)
 
   replicate : ∀ {a} {A : Set a} → Coℕ → A → [ A ]
-  replicate zero    x = []
-  replicate (suc n) x = x ∷ ♯ replicate (♭ n) x
+  replicate zero    x = now []
+  replicate (suc n) x = now (x ∷ later (♯ replicate (♭ n) x))
 
   repeat : ∀ {a} {A : Set a} → A → [ A ]
   repeat = replicate ∞ℕ
 
 open WithConat public
--}
+
 module WithList where
   open import Data.List using (List; []; _∷_; _∷ʳ_)
 
@@ -178,7 +174,6 @@ module WithList where
     go acc (now (x ∷ xs)) = go (acc ∷ʳ x) xs
     go acc (later x) = later (♯ (go acc (♭ x)))
 
-{-
   -- reverse : ∀ {a} {A : Set a} → [ A ] → List A ⊥
   -- reverse xs = Data.List.reverse <$> toList xs where
   --   open RawMonad (Category.Monad.Partiality.monad) using (_<$>_)
@@ -189,32 +184,32 @@ module WithList where
   take = go [] where
     go : ∀ {a} {A : Set a} → List A → ℕ → [ A ] → List A ⊥
     go acc zero    xs         = now acc
-    go acc (suc n) []         = now acc
-    go acc (suc n) (x ∷ xs)   = later (♯ go (acc ∷ʳ x) n (♭ xs))
+    go acc (suc n) (now [])         = now acc
+    go acc (suc n) (now (x ∷ xs))   = go (acc ∷ʳ x) n xs
     go acc (suc n) (later xs) = later (♯ (go acc (suc n) (♭ xs)))
 
   drop : ∀ {a} {A : Set a} → ℕ → [ A ] → [ A ]
   drop zero    xs         = xs
-  drop (suc n) []         = []
-  drop (suc n) (x ∷ xs)   = later (♯ (drop n (♭ xs)))
+  drop (suc n) (now [])         = now []
+  drop (suc n) (now (x ∷ xs))   = drop n xs
   drop (suc n) (later xs) = later (♯ (drop (suc n) (♭ xs)))
 
   open import Data.Bool
 
   takeWhile : ∀ {a} {A : Set a} → (A → Bool) → [ A ] → [ A ]
-  takeWhile p [] = []
-  takeWhile p (x ∷ xs) with p x
-  takeWhile p (x ∷ xs) | true  = x ∷ (♯ (takeWhile p (♭ xs)))
-  takeWhile p (x ∷ xs) | false = []
+  takeWhile p (now []) = now []
+  takeWhile p (now (x ∷ xs)) with p x
+  ... | true  = now (x ∷ takeWhile p xs)
+  ... | false = now []
   takeWhile p (later x) = later (♯ takeWhile p (♭ x))
 
   dropWhile : ∀ {a} {A : Set a} → (A → Bool) → [ A ] → [ A ]
-  dropWhile p [] = []
-  dropWhile p (x ∷ xs) with p x
-  dropWhile p (x ∷ xs) | true  = later (♯ (dropWhile p (♭ xs)))
-  dropWhile p (x ∷ xs) | false = []
+  dropWhile p (now []) = now []
+  dropWhile p (now (x ∷ xs)) with p x
+  ... | true  = dropWhile p xs
+  ... | false = now []
   dropWhile p (later x) = later (♯ dropWhile p (♭ x))
--}
+
 open WithList public
 
 module WithColist where
@@ -229,13 +224,13 @@ module WithColist where
   --   open RawMonad (Category.Monad.Partiality.monad) using (_<$>_)
 
 open WithColist public
-{-
+
 intersperse : ∀ {a} {A : Set a} → A → [ A ] → [ A ]
-intersperse a []         = []
-intersperse a (x ∷ xs)   = x ∷ ♯ go a (♭ xs) where
+intersperse a (now [])         = now []
+intersperse a (now (x ∷ xs))   = now (x ∷ go a xs) where
   go : ∀ {a} {A : Set a} → A → [ A ] → [ A ]
-  go b []         = []
-  go b (y ∷ ys)   = b ∷ ♯ (y ∷ ♯ (go b (♭ ys)))
+  go b (now [])         = now []
+  go b (now (y ∷ ys))   = now (b ∷ now (y ∷ go b ys))
   go b (later ys) = later (♯ go b (♭ ys))
 intersperse a (later xs) = later (♯ intersperse a (♭ xs))
 
@@ -245,14 +240,14 @@ module WithMaybe where
 
   unfoldr : ∀ {a b} {A : Set a} {B : Set b} → (B → Maybe (A × B)) → B → [ A ]
   unfoldr f b with f b
-  ... | just (a' , b') = a' ∷ ♯ unfoldr f b'
-  ... | nothing        = []
+  ... | just (a' , b') = now (a' ∷ later (♯ unfoldr f b'))
+  ... | nothing        = now []
 
   iterate : ∀ {a} {A : Set a} → (A → A) → A → [ A ]
   iterate f = unfoldr (λ b → just (b , f b))
 
 open WithMaybe public
--}
+
 module WithIO where
   open import IO using (IO; return; _>>=_)
 
