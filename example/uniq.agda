@@ -28,3 +28,11 @@ uniq = go nothing where
 main = run (interact (unlines ∘ map (fromList ∘ toList ∘ coloring) ∘ uniq ∘ lines)) where
   coloring : String → String
   coloring ss = "\x1b[32m" ++ ss ++ "\x1b[39m" -- わかりやすいように出力に色付け
+
+module Properties where
+
+  import Relation.Binary.PropositionalEquality as PropEq
+  open PropEq using (_≡_; refl)
+
+  uniq[]-is-[] : uniq (now []) ≡ now []
+  uniq[]-is-[] = refl
