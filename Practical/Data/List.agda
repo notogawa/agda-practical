@@ -22,7 +22,7 @@ open import Coinduction
 open import Category.Monad
 open import Category.Monad.Partiality hiding (map; monad)
 
--- List の cdr に _⊥ を挟んだもの
+-- List 自体と，その cdr に _⊥ を挟んだもの
 mutual
   data [_]' {a} (A : Set a) : Set a where
     []    : [ A ]'
@@ -48,7 +48,6 @@ zipWith f (now (x ∷ xs)) (now (y ∷ ys)) = now (f x y ∷ zipWith f xs ys)
 module WithProduct where
   open import Data.Product hiding (zip)
 
-  -- 「later : (x : ∞ A) → A を構成子に持っている型A」みたいなのが取り出せる必要がある
   -- なんかこのfoldrはクッソダメな気がするが停止性ががが
   foldr : ∀ {a b} {A : Set a} {B : Set b} → (A → B ⊥ → B ⊥) → B ⊥ → [ A ] → B ⊥
   foldr c = go c (id , c) where
@@ -71,7 +70,7 @@ concat : ∀ {a} {A : Set a} → [ [ A ] ] → [ A ]
 concat (now [])                   = now []
 concat (now (now [] ∷ xss))       = concat xss
 concat (now (now (x ∷ xs) ∷ xss)) = now (x ∷ concat (now (xs ∷ xss)))
-concat (now (later xs ∷ xss))     = later (♯ (concat (now (♭ xs ∷ xss))))
+concat (now (later xs ∷ xss))     = later (♯ concat (now (♭ xs ∷ xss)))
 concat (later xss)                = later (♯ concat (♭ xss))
 
 map : ∀ {a b} {A : Set a} {B : Set b} → (A → B) → [ A ] → [ B ]
@@ -183,7 +182,7 @@ module WithList where
     go acc zero    xs             = now acc
     go acc (suc n) (now [])       = now acc
     go acc (suc n) (now (x ∷ xs)) = go (acc ∷ʳ x) n xs
-    go acc (suc n) (later xs)     = later (♯ (go acc (suc n) (♭ xs)))
+    go acc (suc n) (later xs)     = later (♯ go acc (suc n) (♭ xs))
 
   drop : ∀ {a} {A : Set a} → ℕ → [ A ] → [ A ]
   drop zero    xs             = xs
