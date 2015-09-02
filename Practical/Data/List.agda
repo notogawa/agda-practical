@@ -22,18 +22,21 @@ open import Coinduction
 open import Category.Monad
 open import Category.Monad.Partiality hiding (map; monad)
 
--- Colist に _⊥ の later相当を追加したもの
-data [_] {a} (A : Set a) : Set a where
-  []    : [ A ]
-  _∷_   : (x : A) (xs : ∞ [ A ]) → [ A ]
-  later : (xs : ∞ [ A ]) → [ A ]
+-- List の cdr に _⊥ を挟んだもの
+mutual
+  data [_]' {a} (A : Set a) : Set a where
+    []    : [ A ]'
+    _∷_   : (x : A) (xs : [ A ]) → [ A ]'
+
+  [_] : ∀ {a} → Set a → Set a
+  [ A ] = [ A ]' ⊥
 
 infixr 5 _++_
 
 _++_ : ∀ {a} {A : Set a} → [ A ] → [ A ] → [ A ]
-[]       ++ ys = []
-x ∷ xs   ++ ys = x ∷ ♯ (♭ xs ++ ys)
-later xs ++ ys = later (♯ (♭ xs ++ ys))
+now []       ++ ys = ys
+now (x ∷ xs) ++ ys = now (x ∷ (xs ++ ys))
+later xs     ++ ys = later (♯ (♭ xs ++ ys))
 
 -- laterを持ってる型ならばstep(=run⊥)で⊥を取り込める という一般化をしたい？が…
 step : ∀ {a} {A : Set a} → [ A ] ⊥ → [ A ]
@@ -42,12 +45,12 @@ step (later x) = later (♯ step(♭ x))
 
 zipWith : ∀ {a b c} {A : Set a} {B : Set b} {C : Set c}
           → (A → B → C) → [ A ] → [ B ] → [ C ]
-zipWith f []         _          = []
-zipWith f _          []         = []
-zipWith f (later xs) ys         = later (♯ (zipWith f (♭ xs) ys))
-zipWith f xs         (later ys) = later (♯ (zipWith f xs (♭ ys)))
-zipWith f (x ∷ xs)   (y ∷ ys)   = f x y ∷ ♯ zipWith f (♭ xs) (♭ ys)
-
+zipWith f (now [])   _                  = now []
+zipWith f _          (now [])           = now []
+zipWith f (later xs) ys                 = later (♯ (zipWith f (♭ xs) ys))
+zipWith f xs         (later ys)         = later (♯ (zipWith f xs (♭ ys)))
+zipWith f (now (x ∷ xs)) (now (y ∷ ys)) = now (f x y ∷ zipWith f xs ys)
+{-
 module WithProduct where
   open import Data.Product hiding (zip)
 
@@ -56,32 +59,33 @@ module WithProduct where
   foldr : ∀ {a b} {A : Set a} {B : Set b} → (A → B ⊥ → B ⊥) → B ⊥ → [ A ] → B ⊥
   foldr c = go c (id , c) where
     go : ∀ {a b} {A : Set a} {B : Set b} → (A → B ⊥ → B ⊥) → ((B ⊥ → B ⊥) × (A → B ⊥ → B ⊥)) → B ⊥ → [ A ] → B ⊥
-    go c (proj₁ , proj₂) n []       = proj₁ n
-    go c (proj₁ , proj₂) n (x ∷ xs) = later (♯ go c ((proj₂ x) , (λ y → proj₂ x ∘ c y)) n (♭ xs))
+    go c (proj₁ , proj₂) n (now []) = proj₁ n
+    go c (proj₁ , proj₂) n (now (x ∷ xs)) = later (♯ go c ((proj₂ x) , (λ y → proj₂ x ∘ c y)) n (♭ xs))
     go c p n (later x)              = later (♯ (go c p n (♭ x)))
 
   zip : ∀ {a b} {A : Set a} {B : Set b} → [ A ] → [ B ] → [ A × B ]
   zip = zipWith (_,_)
 
 open WithProduct public
-
+-}
 foldl : ∀ {a b} {A : Set a} {B : Set b} → (A ⊥ → B → A ⊥) → A ⊥ → [ B ] → A ⊥
-foldl c n []         = n
-foldl c n (x ∷ xs)   = later (♯ foldl c (c n x) (♭ xs))
-foldl c n (later xs) = later (♯ foldl c n (♭ xs))
+foldl c n (now [])       = n
+foldl c n (now (x ∷ xs)) = foldl c (c n x) xs
+foldl c n (later xs)     = later (♯ foldl c n (♭ xs))
 
 concat : ∀ {a} {A : Set a} → [ [ A ] ] → [ A ]
-concat []               = []
-concat ([] ∷ xss)       = later (♯ concat (♭ xss))
-concat ((x ∷ xs) ∷ xss) = x    ∷ ♯ concat (♭ xs ∷ xss)
-concat (later xs ∷ xss) = later (♯ concat (♭ xs ∷ xss))
-concat (later xss)      = later (♯ concat (♭ xss))
+concat (now [])         = now []
+concat (now (now [] ∷ xss)) = concat xss
+concat (now (now (x ∷ xs) ∷ xss)) = now (x ∷ concat (now (xs ∷ xss)))
+concat (now (later xs ∷ xss)) = later (♯ (concat (now (♭ xs ∷ xss))))
+concat (later xss) = later (♯ concat (♭ xss))
 
 map : ∀ {a b} {A : Set a} {B : Set b} → (A → B) → [ A ] → [ B ]
-map f []         = []
-map f (x ∷ xs)   = f x ∷ ♯ map f (♭ xs)
+map f (now [])         = now []
+map f (now (x ∷ xs))   = now (f x ∷ map f xs)
 map f (later xs) = later (♯ map f (♭ xs))
 
+{-
 concatMap : ∀ {a b} {A : Set a} {B : Set b} → (A → [ B ]) → [ A ] → [ B ]
 concatMap f = concat ∘ map f
 
@@ -147,9 +151,9 @@ open WithBool public
 module WithConat where
   open import Data.Conat
 
-  length : ∀ {a} {A : Set a} → [ A ] → Coℕ ⊥
-  length = foldr (λ a b → suc ∘ ♯_ <$> b) (now zero) where
-    open RawMonad (Category.Monad.Partiality.monad) using (_<$>_)
+  -- length : ∀ {a} {A : Set a} → [ A ] → Coℕ ⊥
+  -- length = foldr (λ a b → suc ∘ ♯_ <$> b) (now zero) where
+  --   open RawMonad (Category.Monad.Partiality.monad) using (_<$>_)
 
   replicate : ∀ {a} {A : Set a} → Coℕ → A → [ A ]
   replicate zero    x = []
@@ -159,21 +163,25 @@ module WithConat where
   repeat = replicate ∞ℕ
 
 open WithConat public
-
+-}
 module WithList where
   open import Data.List using (List; []; _∷_; _∷ʳ_)
 
   fromList : ∀ {a} {A : Set a} → List A → [ A ]
-  fromList []       = []
-  fromList (x ∷ xs) = x ∷ ♯ fromList xs
+  fromList []       = now []
+  fromList (x ∷ xs) = now (x ∷ fromList xs)
 
   toList : ∀ {a} {A : Set a} → [ A ] → List A ⊥
-  toList = foldr (λ a b → (_∷_ a) <$> b) (now []) where
-    open RawMonad (Category.Monad.Partiality.monad) using (_<$>_)
+  toList = go [] where
+    go : ∀ {a} {A : Set a} → List A → [ A ] → List A ⊥
+    go acc (now []) = now acc
+    go acc (now (x ∷ xs)) = go (acc ∷ʳ x) xs
+    go acc (later x) = later (♯ (go acc (♭ x)))
 
-  reverse : ∀ {a} {A : Set a} → [ A ] → List A ⊥
-  reverse xs = Data.List.reverse <$> toList xs where
-    open RawMonad (Category.Monad.Partiality.monad) using (_<$>_)
+{-
+  -- reverse : ∀ {a} {A : Set a} → [ A ] → List A ⊥
+  -- reverse xs = Data.List.reverse <$> toList xs where
+  --   open RawMonad (Category.Monad.Partiality.monad) using (_<$>_)
 
   open import Data.Nat
 
@@ -206,22 +214,22 @@ module WithList where
   dropWhile p (x ∷ xs) | true  = later (♯ (dropWhile p (♭ xs)))
   dropWhile p (x ∷ xs) | false = []
   dropWhile p (later x) = later (♯ dropWhile p (♭ x))
-
+-}
 open WithList public
 
 module WithColist where
   open import Data.Colist using (Colist; []; _∷_)
 
   fromColist : ∀ {a} {A : Set a} → Colist A → [ A ]
-  fromColist []       = []
-  fromColist (x ∷ xs) = x ∷ ♯ fromColist (♭ xs)
+  fromColist []       = now []
+  fromColist (x ∷ xs) = now (x ∷ later (♯ fromColist (♭ xs)))
 
-  toColist : ∀ {a} {A : Set a} → [ A ] → Colist A ⊥
-  toColist = foldr (λ a b → (_∷_ a) ∘ ♯_ <$> b) (now []) where
-    open RawMonad (Category.Monad.Partiality.monad) using (_<$>_)
+  -- toColist : ∀ {a} {A : Set a} → [ A ] → Colist A ⊥
+  -- toColist = foldr (λ a b → (_∷_ a) ∘ ♯_ <$> b) (now []) where
+  --   open RawMonad (Category.Monad.Partiality.monad) using (_<$>_)
 
 open WithColist public
-
+{-
 intersperse : ∀ {a} {A : Set a} → A → [ A ] → [ A ]
 intersperse a []         = []
 intersperse a (x ∷ xs)   = x ∷ ♯ go a (♭ xs) where
@@ -244,15 +252,15 @@ module WithMaybe where
   iterate f = unfoldr (λ b → just (b , f b))
 
 open WithMaybe public
-
+-}
 module WithIO where
   open import IO using (IO; return; _>>=_)
 
   sequence : ∀ {a} {A : Set a} → [ IO A ] → IO [ A ]
-  sequence []         = return []
-  sequence (c ∷ cs)   = ♯ c                  >>= λ x  →
-                        ♯ (♯ sequence (♭ cs) >>= λ xs →
-                        ♯ return (x ∷ ♯ xs))
+  sequence (now [])   = return (now [])
+  sequence (now (c ∷ cs))   = ♯ c              >>= λ x  →
+                              ♯ (♯ sequence cs >>= λ xs →
+                              ♯ return (now (x ∷ xs)))
   sequence (later cs) = ♯ sequence (♭ cs) >>= λ xs →
                         ♯ return (later (♯ xs))
 
