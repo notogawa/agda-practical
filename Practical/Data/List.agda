@@ -38,17 +38,11 @@ now []       ++ ys = ys
 now (x ∷ xs) ++ ys = now (x ∷ (xs ++ ys))
 later xs     ++ ys = later (♯ (♭ xs ++ ys))
 
--- laterを持ってる型ならばstep(=run⊥)で⊥を取り込める という一般化をしたい？が…
-step : ∀ {a} {A : Set a} → [ A ] ⊥ → [ A ]
-step (now x)   = x
-step (later x) = later (♯ step (♭ x))
-
-zipWith : ∀ {a b c} {A : Set a} {B : Set b} {C : Set c}
-          → (A → B → C) → [ A ] → [ B ] → [ C ]
+zipWith : ∀ {a b c} {A : Set a} {B : Set b} {C : Set c} → (A → B → C) → [ A ] → [ B ] → [ C ]
 zipWith f (now [])       _              = now []
 zipWith f _              (now [])       = now []
-zipWith f (later xs)     ys             = later (♯ (zipWith f (♭ xs) ys))
-zipWith f xs             (later ys)     = later (♯ (zipWith f xs (♭ ys)))
+zipWith f (later xs)     ys             = later (♯ zipWith f (♭ xs) ys)
+zipWith f xs             (later ys)     = later (♯ zipWith f xs (♭ ys))
 zipWith f (now (x ∷ xs)) (now (y ∷ ys)) = now (f x y ∷ zipWith f xs ys)
 
 module WithProduct where
