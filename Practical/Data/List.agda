@@ -20,7 +20,7 @@ module Practical.Data.List where
 open import Function
 open import Coinduction
 open import Category.Monad
-open import Category.Monad.Partiality hiding (map)
+open import Category.Monad.Partiality hiding (map; monad)
 
 -- Colist に _⊥ の later相当を追加したもの
 data [_] {a} (A : Set a) : Set a where
@@ -52,6 +52,7 @@ module WithProduct where
   open import Data.Product hiding (zip)
 
   -- 「later : (x : ∞ A) → A を構成子に持っている型A」みたいなのが取り出せる必要がある
+  -- なんかこのfoldrはダメな気がするがcがどんな関数かわからないのでしょうがない
   foldr : ∀ {a b} {A : Set a} {B : Set b} → (A → B ⊥ → B ⊥) → B ⊥ → [ A ] → B ⊥
   foldr c = go c (id , c) where
     go : ∀ {a b} {A : Set a} {B : Set b} → (A → B ⊥ → B ⊥) → ((B ⊥ → B ⊥) × (A → B ⊥ → B ⊥)) → B ⊥ → [ A ] → B ⊥
@@ -83,6 +84,24 @@ map f (later xs) = later (♯ map f (♭ xs))
 
 concatMap : ∀ {a b} {A : Set a} {B : Set b} → (A → [ B ]) → [ A ] → [ B ]
 concatMap f = concat ∘ map f
+
+monad : ∀ {a} → RawMonad {a} [_]
+monad = record
+  { return = λ x → x ∷ ♯ []
+  ; _>>=_ = λ xs f → concatMap f xs
+  }
+
+monadZero : ∀ {a} → RawMonadZero {a} [_]
+monadZero = record
+  { monad = monad
+  ; ∅     = []
+  }
+
+monadPlus : ∀ {a} → RawMonadPlus {a} [_]
+monadPlus = record
+  { monadZero = monadZero
+  ; _∣_       = _++_
+  }
 
 module WithBool where
   open import Data.Bool using (Bool; true; false)
