@@ -54,7 +54,7 @@ module WithProduct where
     go : ∀ {a b} {A : Set a} {B : Set b} → (A → B ⊥ → B ⊥) → ((B ⊥ → B ⊥) × (A → B ⊥ → B ⊥)) → B ⊥ → [ A ] → B ⊥
     go c (proj₁ , proj₂) n (now [])       = proj₁ n
     go c (proj₁ , proj₂) n (now (x ∷ xs)) = go c ((proj₂ x) , (λ y → proj₂ x ∘ c y)) n xs
-    go c p n (later x)                    = later (♯ (go c p n (♭ x)))
+    go c p n (later x)                    = later (♯ go c p n (♭ x))
 
   zip : ∀ {a b} {A : Set a} {B : Set b} → [ A ] → [ B ] → [ A × B ]
   zip = zipWith (_,_)
