@@ -170,20 +170,23 @@ module WithList where
     open RawMonad (Category.Monad.Partiality.monad) using (_<$>_)
 
   open import Data.Nat
+  open import Data.Product
+
+  split_at_ : ∀ {a} {A : Set a} → [ A ] → ℕ → (List A × [ A ]) ⊥
+  split xs at n  = go [] xs n where
+    go : ∀ {a} {A : Set a} → List A → [ A ] → ℕ → (List A × [ A ]) ⊥
+    go acc xss zero = now (acc , xss)
+    go acc (now []) (suc n) = now (acc , now [])
+    go acc (now (x ∷ xs)) (suc n) = go (acc ∷ʳ x) xs n
+    go acc (later xs) (suc n) = later (♯ go acc (♭ xs) (suc n))
 
   take : ∀ {a} {A : Set a} → ℕ → [ A ] → List A ⊥
-  take = go [] where
-    go : ∀ {a} {A : Set a} → List A → ℕ → [ A ] → List A ⊥
-    go acc zero    xs             = now acc
-    go acc (suc n) (now [])       = now acc
-    go acc (suc n) (now (x ∷ xs)) = go (acc ∷ʳ x) n xs
-    go acc (suc n) (later xs)     = later (♯ go acc (suc n) (♭ xs))
+  take n xs = proj₁ <$> split xs at n where
+    open RawMonad (Category.Monad.Partiality.monad) using (_<$>_)
 
   drop : ∀ {a} {A : Set a} → ℕ → [ A ] → [ A ]
-  drop zero    xs             = xs
-  drop (suc n) (now [])       = now []
-  drop (suc n) (now (x ∷ xs)) = drop n xs
-  drop (suc n) (later xs)     = later (♯ drop (suc n) (♭ xs))
+  drop n xs = join (proj₂ <$> split xs at n) where
+    open RawMonad (Category.Monad.Partiality.monad) using (_<$>_; join)
 
   open import Data.Bool
 
