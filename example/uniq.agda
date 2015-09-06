@@ -76,3 +76,28 @@ module Properties where
     go-is-Uniq mxs (now (xs ∷ later xss)) | yes p = go-is-Uniq mxs (later xss)
     go-is-Uniq mxs (now (xs ∷ later xss)) | no ¬p = later2 (♯ go-is-Uniq nothing (now (xs ∷ ♭ xss)))
     go-is-Uniq mxs (later xss) = later1 (♯ go-is-Uniq mxs (♭ xss))
+
+  -- 入力の部分列になっている性質 Subseq
+  data Subseq : [ String ] → [ String ] → Set where
+    nil : Subseq (now []) (now [])
+    here : ∀ {xs xss ys yss} → xs ≡ ys → Subseq xss yss → Subseq (now (xs ∷ xss)) (now (ys ∷ yss))
+    there : ∀ {xs xss yss} → Subseq xss yss → Subseq (now (xs ∷ xss)) yss
+    laterₗ : ∀ {xss yss} → ∞ (Subseq (♭ xss) yss) → Subseq (later xss) yss
+    laterᵣ : ∀ {xss yss} → ∞ (Subseq xss (♭ yss)) → Subseq xss (later yss)
+
+  -- 関数uniqの結果が元の列に対しSubseqを満たす
+  uniq-xss-is-Subseq-of-xss : ∀ xss → Subseq xss (uniq xss)
+  uniq-xss-is-Subseq-of-xss = go-xss-is-Subseq-of-xss nothing where
+    -- goがSubseqを満たすこと
+    go-xss-is-Subseq-of-xss : ∀ mxs xss → Subseq xss (go mxs xss)
+    go-xss-is-Subseq-of-xss mxs (now []) = nil
+    go-xss-is-Subseq-of-xss mxs (now (xs ∷ now [])) with mxs ≟ just xs
+    go-xss-is-Subseq-of-xss mxs (now (xs ∷ now [])) | yes p = there nil
+    go-xss-is-Subseq-of-xss mxs (now (xs ∷ now [])) | no ¬p = here PropEq.refl nil
+    go-xss-is-Subseq-of-xss mxs (now (xs ∷ now (ys ∷ yss))) with mxs ≟ just xs
+    go-xss-is-Subseq-of-xss mxs (now (xs ∷ now (ys ∷ yss))) | yes p = there (go-xss-is-Subseq-of-xss mxs (now (ys ∷ yss)))
+    go-xss-is-Subseq-of-xss mxs (now (xs ∷ now (ys ∷ yss))) | no ¬p = here PropEq.refl (go-xss-is-Subseq-of-xss (just xs) (now (ys ∷ yss)))
+    go-xss-is-Subseq-of-xss mxs (now (xs ∷ later xss)) with mxs ≟ just xs
+    go-xss-is-Subseq-of-xss mxs (now (xs ∷ later xss)) | yes p = there (laterₗ (♯ laterᵣ (♯ (go-xss-is-Subseq-of-xss mxs (♭ xss)))))
+    go-xss-is-Subseq-of-xss mxs (now (xs ∷ later xss)) | no ¬p = here PropEq.refl (laterₗ (♯ laterᵣ (♯ (go-xss-is-Subseq-of-xss (just xs) (♭ xss)))))
+    go-xss-is-Subseq-of-xss mxs (later x) = laterₗ (♯ laterᵣ (♯ go-xss-is-Subseq-of-xss mxs (♭ x)))
