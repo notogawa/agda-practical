@@ -15,7 +15,7 @@ module Practical.Data.List where
 open import Function
 open import Coinduction
 open import Category.Monad
-open import Category.Monad.Partiality hiding (map; monad)
+open import Category.Monad.Partiality using (_⊥; now; later)
 
 -- List 自体と，その cdr に _⊥ を挟んだもの
 mutual
