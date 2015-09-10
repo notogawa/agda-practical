@@ -1,8 +1,4 @@
 -- uniqコマンド
---
--- $ agda -c -i. -i/usr/share/agda-stdlib/ example/uniq.agda
--- $ ./uniq
---
 module example.uniq where
 
 open import Practical hiding (String; _++_; toList)
