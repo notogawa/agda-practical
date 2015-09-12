@@ -115,7 +115,7 @@ Costring = Colist Char
 ## Colistとは
 
 * 終わらないかもしれないリスト構造
-    * 一段階評価・分解し，はじめて続くか終わるかがわかる
+    * 一段階評価・分解し，始めて続くか終わるかがわかる
     * Coinductive Data Type
 
 ~~~~
@@ -669,8 +669,8 @@ sequence (later cs)     = ♯ sequence (♭ cs) >>= λ xs →
 #
 ## 証明に使う性質の定義
 
-* 各コンストラクタに，できるだけdisjointな結果を構成させる
-    * これはInductive Data上の証明に対しても言える
+* 各コンストラクタにdisjointな結果を構成させる
+    * Inductive Data上の証明に対しても同様
     * nowとlaterが出てくるとなおさら
 
 ~~~~
@@ -720,10 +720,10 @@ agda-practicalのinteractは，
 * Lazy IO に依らない Streaming Data Processing
     * 適切なリソースの扱い
     * conduit/pipes系の移植？
-* Partiality Monad が Monad Transformer と相性が悪い？
+* Partiality Monad が Monad Transformer の相性
     * 合成してもlaterが綺麗に扱えない
 * agda-practical の充実
-    * parser系を用意しないと数値(や，その他)に変換できない
+    * parser系を用意しないと数値等に変換できない
     * プロコンでAgdaを使えるくらいには
 
 ~~~~
@@ -737,4 +737,4 @@ agda-practicalのinteractは，
 
 Agda実用勢からの Pull Request 等お待ちしてます
 
-https://github.com/notogawa/agda-practical
+[https://github.com/notogawa/agda-practical](https://github.com/notogawa/agda-practical)

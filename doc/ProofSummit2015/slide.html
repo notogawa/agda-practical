@@ -177,7 +177,7 @@ Costring = Colist Char</code></pre>
 <ul>
 <li>終わらないかもしれないリスト構造
 <ul>
-<li>一段階評価・分解し，はじめて続くか終わるかがわかる</li>
+<li>一段階評価・分解し，始めて続くか終わるかがわかる</li>
 <li>Coinductive Data Type</li>
 </ul></li>
 </ul>
@@ -671,9 +671,9 @@ sequence (later cs)     = ♯ sequence (♭ cs) &gt;&gt;= λ xs →
 <h1></h1>
 <h2 id="証明に使う性質の定義">証明に使う性質の定義</h2>
 <ul>
-<li>各コンストラクタに，できるだけdisjointな結果を構成させる
+<li>各コンストラクタにdisjointな結果を構成させる
 <ul>
-<li>これはInductive Data上の証明に対しても言える</li>
+<li>Inductive Data上の証明に対しても同様</li>
 <li>nowとlaterが出てくるとなおさら</li>
 </ul></li>
 </ul>
@@ -732,13 +732,13 @@ sequence (later cs)     = ♯ sequence (♭ cs) &gt;&gt;= λ xs →
 <li>適切なリソースの扱い</li>
 <li>conduit/pipes系の移植？</li>
 </ul></li>
-<li>Partiality Monad が Monad Transformer と相性が悪い？
+<li>Partiality Monad が Monad Transformer の相性
 <ul>
 <li>合成してもlaterが綺麗に扱えない</li>
 </ul></li>
 <li>agda-practical の充実
 <ul>
-<li>parser系を用意しないと数値(や，その他)に変換できない</li>
+<li>parser系を用意しないと数値等に変換できない</li>
 <li>プロコンでAgdaを使えるくらいには</li>
 </ul></li>
 </ul>
@@ -750,7 +750,7 @@ sequence (later cs)     = ♯ sequence (♭ cs) &gt;&gt;= λ xs →
 <h1></h1>
 <h2 id="以上">以上</h2>
 <p>Agda実用勢からの Pull Request 等お待ちしてます</p>
-<p>https://github.com/notogawa/agda-practical</p>
+<p><a href="https://github.com/notogawa/agda-practical" class="uri">https://github.com/notogawa/agda-practical</a></p>
 </section>
     </div>
   </div>
