@@ -97,3 +97,14 @@ module Properties where
     go-xss-is-Subseq-of-xss mxs (now (xs ∷ later xss)) | yes p = there (laterₗ (♯ laterᵣ (♯ (go-xss-is-Subseq-of-xss mxs (♭ xss)))))
     go-xss-is-Subseq-of-xss mxs (now (xs ∷ later xss)) | no ¬p = here PropEq.refl (laterₗ (♯ laterᵣ (♯ (go-xss-is-Subseq-of-xss (just xs) (♭ xss)))))
     go-xss-is-Subseq-of-xss mxs (later x) = laterₗ (♯ laterᵣ (♯ go-xss-is-Subseq-of-xss mxs (♭ x)))
+
+  as : [ String ]
+  as = now ("a" ∷ later (♯ as))
+
+  bs : [ String ]
+  bs = now ("b" ∷ later (♯ bs))
+
+  -- これがダメな(「ダメとしたい」)やつだけど弾けない，
+  -- 無限である以上「いつか来るかもしれない」ため仕方ないのだがー
+  bad-prop : Subseq as bs
+  bad-prop = there (laterₗ (♯ bad-prop))
