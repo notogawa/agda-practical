@@ -108,3 +108,6 @@ module Properties where
   -- 無限である以上「いつか来るかもしれない」ため仕方ないのだがー
   bad-prop : Subseq as bs
   bad-prop = there (laterₗ (♯ bad-prop))
+  -- どうにかするならData.Colist.Finiteみたいな性質を[_]にも定義し，
+  -- Subseqを定めるための前提条件にするとかになる．
+  -- ただ出元がIOだとその性質は証明できないんだけどね．
