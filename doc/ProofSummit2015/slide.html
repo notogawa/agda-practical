@@ -35,8 +35,14 @@
     <h3 class="date">2015/9/12</h3>
 </section>
 
-<section id="実用" class="slide level1">
-<h1>&quot;実用&quot;</h1>
+<section id="ゴール" class="slide level1">
+<h1>ゴール</h1>
+<p>「Agdaでもプログラミングできそう！」</p>
+<p>なキモチをお届け</p>
+</section>
+<section id="section" class="slide level1">
+<h1></h1>
+<h2 id="実用">&quot;実用&quot;</h2>
 <ul>
 <li>for 証明士
 <ul>
@@ -51,7 +57,7 @@
 </ul></li>
 </ul>
 </section>
-<section id="section" class="slide level1">
+<section id="section-1" class="slide level1">
 <h1></h1>
 <h2 id="発表内容">発表内容</h2>
 <p>ふたつの観点</p>
@@ -68,7 +74,7 @@
 </ul></li>
 </ul>
 </section>
-<section id="section-1" class="slide level1">
+<section id="section-2" class="slide level1">
 <h1></h1>
 <h2 id="本日のお題">本日のお題</h2>
 <p>uniqコマンドを作ってみよう</p>
@@ -84,7 +90,7 @@ abc  &lt;- 出力される
 <pre><code>main = interact (unlines . uniq . lines) where
   uniq = 以下略</code></pre>
 </section>
-<section id="section-2" class="slide level1">
+<section id="section-3" class="slide level1">
 <h1></h1>
 <h2 id="agda実行方法">Agda実行方法</h2>
 <ul>
@@ -105,7 +111,7 @@ abc  &lt;- 出力される
 </ul>
 <p>→ <strong style="color: #F00">停止性等に対する甘えが許されない</strong></p>
 </section>
-<section id="section-3" class="slide level1">
+<section id="section-4" class="slide level1">
 <h1></h1>
 <h2 id="agdaプログラミング">Agdaプログラミング</h2>
 <ul>
@@ -131,7 +137,7 @@ abc  &lt;- 出力される
 </ul></li>
 </ul>
 </section>
-<section id="section-4" class="slide level1">
+<section id="section-5" class="slide level1">
 <h1></h1>
 <h2 id="現実の入力を扱うには">現実の入力を扱うには</h2>
 <ul>
@@ -155,7 +161,7 @@ readFile : String → IO Costring</code></pre>
 </ul></li>
 </ul>
 </section>
-<section id="section-5" class="slide level1">
+<section id="section-6" class="slide level1">
 <h1></h1>
 <h2 id="costringとは">Costringとは</h2>
 <ul>
@@ -171,7 +177,7 @@ Costring = Colist Char</code></pre>
 </ul></li>
 </ul>
 </section>
-<section id="section-6" class="slide level1">
+<section id="section-7" class="slide level1">
 <h1></h1>
 <h2 id="colistとは">Colistとは</h2>
 <ul>
@@ -195,7 +201,7 @@ Costring = Colist Char</code></pre>
   []  : List A
   _∷_ : (x : A) (xs : List A) → List A</code></pre>
 </section>
-<section id="section-7" class="slide level1">
+<section id="section-8" class="slide level1">
 <h1></h1>
 <h2 id="coinductive---3つの記号">Coinductive - 3つの記号</h2>
 <pre><code>∞  : ∀ {a} (A : Set a) → Set a
@@ -219,7 +225,7 @@ Costring = Colist Char</code></pre>
 </ul></li>
 </ul>
 </section>
-<section id="section-8" class="slide level1">
+<section id="section-9" class="slide level1">
 <h1></h1>
 <h2 id="再掲-colist">再掲: Colist</h2>
 <pre><code>data Colist {a} (A : Set a) : Set a where
@@ -237,7 +243,7 @@ Costring = Colist Char</code></pre>
 </ul></li>
 </ul>
 </section>
-<section id="section-9" class="slide level1">
+<section id="section-10" class="slide level1">
 <h1></h1>
 <h2 id="coinductiveで書けるもの">Coinductiveで書けるもの</h2>
 <p>無限列</p>
@@ -247,7 +253,7 @@ ones = 1 ∷ ♯ ones</code></pre>
 <pre><code>ones : List ℕ
 ones = 1 ∷ ones</code></pre>
 </section>
-<section id="section-10" class="slide level1">
+<section id="section-11" class="slide level1">
 <h1></h1>
 <h2 id="停止性の差異">停止性の差異</h2>
 <p>OK</p>
@@ -259,7 +265,7 @@ del (x ∷ xs) = del xs</code></pre>
 del [] = []
 del (x ∷ xs) = del (♭ xs)</code></pre>
 </section>
-<section id="section-11" class="slide level1">
+<section id="section-12" class="slide level1">
 <h1></h1>
 <h2 id="停止性検査が見ているもの">停止性検査が見ているもの</h2>
 <ul>
@@ -276,9 +282,9 @@ del (x ∷ xs) = del (♭ xs)</code></pre>
 </ul>
 <p>このあたりはIdrisとかでも同じ</p>
 </section>
-<section id="section-12" class="slide level1">
+<section id="section-13" class="slide level1">
 <h1></h1>
-<h2 id="もう少し具体例list上のfilter">もう少し具体例:List上のfilter</h2>
+<h2 id="list上のfilter">List上のfilter</h2>
 <p>Listのfilterは停止性判定を通る</p>
 <pre><code>filter : ∀ {a} {A : Set a} →
          (A → Bool) → List A → List A
@@ -287,9 +293,9 @@ filter p (x ∷ xs) with p x
 ... | true  = x ∷ filter p xs
 ... | false =     filter p xs</code></pre>
 </section>
-<section id="section-13" class="slide level1">
+<section id="section-14" class="slide level1">
 <h1></h1>
-<h2 id="もう少し具体例colist上のfilter">もう少し具体例:Colist上のfilter</h2>
+<h2 id="colist上のfilter">Colist上のfilter</h2>
 <p>Colistのfilterは停止性判定を通らない</p>
 <pre><code>filter : ∀ {a} {A : Set a} →
          (A → Bool) → Colist A → Colist A
@@ -298,7 +304,7 @@ filter p (x ∷ xs) with p x
 ... | true  = x ∷ ♯ filter p (♭ xs)
 ... | false =       filter p (♭ xs)</code></pre>
 </section>
-<section id="section-14" class="slide level1">
+<section id="section-15" class="slide level1">
 <h1></h1>
 <h2 id="coinductiveでは">Coinductiveでは</h2>
 <ul>
@@ -311,7 +317,7 @@ filter p (x ∷ xs) with p x
 </ul></li>
 </ul>
 </section>
-<section id="section-15" class="slide level1">
+<section id="section-16" class="slide level1">
 <h1></h1>
 <h2 id="colist上のfilterが作る構造">Colist上のfilterが作る構造</h2>
 <pre><code>1 ∷ (♯ 2 ∷ (♯ 3 ∷ (♯ 4 ∷ (♯ 5 ∷ (♯ 6 ∷ ♯ [])))))</code></pre>
@@ -321,7 +327,7 @@ filter p (x ∷ xs) with p x
 <pre><code>1 ∷        (♯ 3 ∷        (♯ 5 ∷        ♯ []))</code></pre>
 <p>小さくなるので停止性検査を通らない</p>
 </section>
-<section id="section-16" class="slide level1">
+<section id="section-17" class="slide level1">
 <h1></h1>
 <h2 id="haskellのlist">HaskellのList</h2>
 <ul>
@@ -336,7 +342,7 @@ filter p (x ∷ xs) with p x
 </ul>
 <p>HaskellのListの正体とは？</p>
 </section>
-<section id="section-17" class="slide level1">
+<section id="section-18" class="slide level1">
 <h1></h1>
 <h2 id="partiality-monad-の導入">Partiality Monad の導入</h2>
 <ul>
@@ -350,7 +356,7 @@ filter p (x ∷ xs) with p x
   now   : (x : A) → A ⊥
   later : (x : ∞ (A ⊥)) → A ⊥</code></pre>
 </section>
-<section id="section-18" class="slide level1">
+<section id="section-19" class="slide level1">
 <h1></h1>
 <h2 id="停止性の変化">停止性の変化</h2>
 <p>NG(再掲)</p>
@@ -362,7 +368,7 @@ del (x ∷ xs) = del (♭ xs)</code></pre>
 del [] = now []
 del (x ∷ xs) = later (♯ del (♭ xs))</code></pre>
 </section>
-<section id="section-19" class="slide level1">
+<section id="section-20" class="slide level1">
 <h1></h1>
 <h2 id="colist上のdelが作る構造">Colist⊥上のdelが作る構造</h2>
 <pre><code>now (1 ∷ now (2 ∷ now (3 ∷ now (4 ∷ now []))))</code></pre>
@@ -373,7 +379,7 @@ del (x ∷ xs) = later (♯ del (♭ xs))</code></pre>
 <p>delは小さくならないので停止性検査を通る</p>
 <p>だが，これでもまだfilterは定義できない</p>
 </section>
-<section id="section-20" class="slide level1">
+<section id="section-21" class="slide level1">
 <h1></h1>
 <h2 id="新リスト型">新リスト型</h2>
 <p>全体とtailが個々にPartiality Monadに包まれている</p>
@@ -386,7 +392,7 @@ del (x ∷ xs) = later (♯ del (♭ xs))</code></pre>
   [ A ] = [ A ]' ⊥</code></pre>
 <p>この型が最もHaskellのリストに近い？</p>
 </section>
-<section id="section-21" class="slide level1">
+<section id="section-22" class="slide level1">
 <h1></h1>
 <h2 id="上のfilterの定義">[_]上のfilterの定義</h2>
 <p>停止性判定OK</p>
@@ -397,7 +403,7 @@ filter p (now (x ∷ xs)) with p x
 ... | false         = later (♯ filter p xs)
 filter p (later xs) = later (♯ filter p (♭ xs))</code></pre>
 </section>
-<section id="section-22" class="slide level1">
+<section id="section-23" class="slide level1">
 <h1></h1>
 <h2 id="上のfilterが作る構造">[_]上のfilterが作る構造</h2>
 <pre><code>now (1 ∷ now (2 ∷ now (3 ∷
@@ -409,7 +415,7 @@ filter p (later xs) = later (♯ filter p (♭ xs))</code></pre>
   later (♯ now (5 ∷ later (♯ now []))))))</code></pre>
 <p>小さくならないので停止性検査を通る</p>
 </section>
-<section id="section-23" class="slide level1">
+<section id="section-24" class="slide level1">
 <h1></h1>
 <h2 id="各リスト構造と評価">各リスト構造と評価</h2>
 <ul>
@@ -431,7 +437,7 @@ filter p (later xs) = later (♯ filter p (♭ xs))</code></pre>
 </ul></li>
 </ul>
 </section>
-<section id="section-24" class="slide level1">
+<section id="section-25" class="slide level1">
 <h1></h1>
 <h2 id="linesの定義">linesの定義</h2>
 <p>停止性判定OK</p>
@@ -446,7 +452,7 @@ lines = go &quot;&quot; where
   ... | no  _      = later (♯ go (acc ++ fromList Data.List.[ x ]) xs)
   go acc (later x) = later (♯ go acc (♭ x))</code></pre>
 </section>
-<section id="section-25" class="slide level1">
+<section id="section-26" class="slide level1">
 <h1></h1>
 <h2 id="linesの構造">linesの構造</h2>
 <pre><code>now ('A' ∷ now ('B' ∷ now ('\n' ∷
@@ -458,7 +464,7 @@ lines = go &quot;&quot; where
   later (♯   now (&quot;C&quot; ∷  later (♯ now (&quot;D&quot; ∷ now [])))))))</code></pre>
 <p>小さくならないので停止性検査を通る</p>
 </section>
-<section id="section-26" class="slide level1">
+<section id="section-27" class="slide level1">
 <h1></h1>
 <h2 id="agda-practical">agda-practical</h2>
 <p><a href="https://github.com/notogawa/agda-practical" class="uri">https://github.com/notogawa/agda-practical</a></p>
@@ -469,7 +475,7 @@ lines = go &quot;&quot; where
 <li>agda-preludeと異なりagda-stdlibと併用できる</li>
 </ul>
 </section>
-<section id="section-27" class="slide level1">
+<section id="section-28" class="slide level1">
 <h1></h1>
 <h2 id="uniqの実現">uniqの実現</h2>
 <p>agda-practicalを利用</p>
@@ -484,7 +490,7 @@ uniq = go nothing where
 
 main = run (interact (unlines ∘ map (fromList ∘ toList) ∘ uniq ∘ lines))</code></pre>
 </section>
-<section id="section-28" class="slide level1">
+<section id="section-29" class="slide level1">
 <h1></h1>
 <h2 id="証明もしてみよう">証明もしてみよう</h2>
 <ul>
@@ -506,7 +512,7 @@ main = run (interact (unlines ∘ map (fromList ∘ toList) ∘ uniq ∘ lines))
 <li>Prop3 : uniqの結果，元のリストの部分リストになる</li>
 </ol>
 </section>
-<section id="section-29" class="slide level1">
+<section id="section-30" class="slide level1">
 <h1></h1>
 <h2 id="prop1の証明">Prop1の証明</h2>
 <p>空リストに評価される値ならば，uniqしても空リストに評価される</p>
@@ -516,7 +522,7 @@ prop1 ._ (Equality.laterˡ {x = x} x₁) = Equality.laterˡ (uniq[]-is-[] (♭ x
 <p>これはカンタン</p>
 <p>agda-stdlib定義済みのアレコレが助かる</p>
 </section>
-<section id="section-30" class="slide level1">
+<section id="section-31" class="slide level1">
 <h1></h1>
 <h2 id="性質uniq">性質Uniq</h2>
 <p>隣接2要素が異なるという性質</p>
@@ -534,7 +540,7 @@ prop1 ._ (Equality.laterˡ {x = x} x₁) = Equality.laterˡ (uniq[]-is-[] (♭ x
 空リストはUniq 要素が1つのリストはUniq Uniqなリストに，その先頭と違う要素を付けたリストもUniq 評価結果がUniqなリストの，先頭2要素が未評価な状態もまたUniq
 </aside>
 </section>
-<section id="section-31" class="slide level1">
+<section id="section-32" class="slide level1">
 <h1></h1>
 <h2 id="uniqのtest">Uniqのtest</h2>
 <p>証明できる</p>
@@ -546,7 +552,7 @@ test-Uniq-1 = later1 (♯ later2 (♯ cons (λ ()) (cons (λ ()) singleton)))</c
 test-Uniq-2 : Uniq (later (♯ (now (&quot;a&quot; ∷ later (♯ now (&quot;a&quot; ∷ now (&quot;c&quot; ∷ now [])))))))
 test-Uniq-2 = later1 (♯ later2 (♯ cons {!&quot;a&quot; ≢ &quot;a&quot;!} (cons (λ ()) singleton)))</code></pre>
 </section>
-<section id="section-32" class="slide level1">
+<section id="section-33" class="slide level1">
 <h1></h1>
 <h2 id="prop2の証明">Prop2の証明</h2>
 <pre><code>prop2 : ∀ xss → Uniq (uniq xss)
@@ -566,7 +572,7 @@ prop2 = lemma nothing where
   lemma mxs (now (xs ∷ later xss)) | no ¬p = later2 (♯ lemma nothing (now (xs ∷ ♭ xss)))
   lemma mxs (later xss) = later1 (♯ lemma mxs (♭ xss))</code></pre>
 </section>
-<section id="section-33" class="slide level1">
+<section id="section-34" class="slide level1">
 <h1></h1>
 <h2 id="性質subseq">性質Subseq</h2>
 <p>ある列(子)がある列(親)の部分列になっているという性質</p>
@@ -585,7 +591,7 @@ prop2 = lemma nothing where
 空リスト同士はSubseq Subseqなリスト同士の先頭に同じものを付けたリスト同士もSubseq Subseqなリスト同士の親側だけに何かを付けたリスト同士もSubseq 評価結果がSubseqなリスト同士の，どちらかた未評価未評価な状態もまたSubseq
 </aside>
 </section>
-<section id="section-34" class="slide level1">
+<section id="section-35" class="slide level1">
 <h1></h1>
 <h2 id="prop3の証明">Prop3の証明</h2>
 <pre><code>prop3 : ∀ xss → Subseq xss (uniq xss)
@@ -603,7 +609,7 @@ prop3 = lemma nothing where
   lemma mxs (now (xs ∷ later xss)) | no ¬p = here PropEq.refl (laterₗ (♯ laterᵣ (♯ (lemma (just xs) (♭ xss)))))
   lemma mxs (later x) = laterₗ (♯ laterᵣ (♯ lemma mxs (♭ x)))</code></pre>
 </section>
-<section id="section-35" class="slide level1">
+<section id="section-36" class="slide level1">
 <h1></h1>
 <h2 id="証明もできた">証明もできた</h2>
 <ul>
@@ -618,7 +624,7 @@ prop3 = lemma nothing where
 <li><strong style="color: #F00">慣れれば難しくない！</strong></li>
 </ul>
 </section>
-<section id="section-36" class="slide level1">
+<section id="section-37" class="slide level1">
 <h1></h1>
 <h2 id="得られた知見">得られた知見</h2>
 <ul>
@@ -628,7 +634,7 @@ prop3 = lemma nothing where
 <li>プログラミング全体の流れ</li>
 </ul>
 </section>
-<section id="section-37" class="slide level1">
+<section id="section-38" class="slide level1">
 <h1></h1>
 <h2 id="データ構造移植">データ構造移植</h2>
 <ul>
@@ -647,7 +653,7 @@ prop3 = lemma nothing where
   [ A ] = [ A ]' ⊥</code></pre>
 <p>木構造や他の構造でも恐らく同じ</p>
 </section>
-<section id="section-38" class="slide level1">
+<section id="section-39" class="slide level1">
 <h1></h1>
 <h2 id="laterの蓄積と消化">laterの蓄積と消化</h2>
 <ul>
@@ -667,7 +673,7 @@ sequence (now (c ∷ cs)) = ♯ c              &gt;&gt;= λ x  →
 sequence (later cs)     = ♯ sequence (♭ cs) &gt;&gt;= λ xs →
                           ♯ return (later (♯ xs))</code></pre>
 </section>
-<section id="section-39" class="slide level1">
+<section id="section-40" class="slide level1">
 <h1></h1>
 <h2 id="証明に使う性質の定義">証明に使う性質の定義</h2>
 <ul>
@@ -691,7 +697,7 @@ sequence (later cs)     = ♯ sequence (♭ cs) &gt;&gt;= λ xs →
 <li>興味ある人は性質Uniqを別の定義にして証明にトライ</li>
 </ul>
 </section>
-<section id="section-40" class="slide level1">
+<section id="section-41" class="slide level1">
 <h1></h1>
 <h2 id="プログラミング全体の流れ">プログラミング全体の流れ</h2>
 <ol type="1">
@@ -705,7 +711,7 @@ sequence (later cs)     = ♯ sequence (♭ cs) &gt;&gt;= λ xs →
 </ol>
 <p>agda-practicalのinteractは， 3～6を行う関数をもらって1,2,7を行う</p>
 </section>
-<section id="section-41" class="slide level1">
+<section id="section-42" class="slide level1">
 <h1></h1>
 <h2 id="まとめ">まとめ</h2>
 <ul>
@@ -723,7 +729,7 @@ sequence (later cs)     = ♯ sequence (♭ cs) &gt;&gt;= λ xs →
 </ul></li>
 </ul>
 </section>
-<section id="section-42" class="slide level1">
+<section id="section-43" class="slide level1">
 <h1></h1>
 <h2 id="今後の課題">今後の課題</h2>
 <ul>
@@ -746,7 +752,7 @@ sequence (later cs)     = ♯ sequence (♭ cs) &gt;&gt;= λ xs →
 
 この はてしなく遠い Agda坂をよ…</code></pre>
 </section>
-<section id="section-43" class="slide level1">
+<section id="section-44" class="slide level1">
 <h1></h1>
 <h2 id="以上">以上</h2>
 <p>Agda実用勢からの Pull Request 等お待ちしてます</p>

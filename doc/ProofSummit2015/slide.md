@@ -2,7 +2,14 @@
 % notogawa
 % 2015/9/12
 
-# "実用"
+# ゴール
+
+「Agdaでもプログラミングできそう！」
+
+なキモチをお届け
+
+#
+## "実用"
 
 * for 証明士
     * 何らかの命題が証明できる
@@ -217,7 +224,7 @@ del (x ∷ xs) = del (♭ xs)
 このあたりはIdrisとかでも同じ
 
 #
-## もう少し具体例:List上のfilter
+## List上のfilter
 
 Listのfilterは停止性判定を通る
 
@@ -231,7 +238,7 @@ filter p (x ∷ xs) with p x
 ~~~~
 
 #
-## もう少し具体例:Colist上のfilter
+## Colist上のfilter
 
 Colistのfilterは停止性判定を通らない
 
