@@ -76,7 +76,7 @@ module Properties where
   -- 入力の部分列になっている性質 Subseq
   data Subseq : [ String ] → [ String ] → Set where
     nil : Subseq (now []) (now [])
-    here : ∀ {xs xss ys yss} → xs ≡ ys → Subseq xss yss → Subseq (now (xs ∷ xss)) (now (ys ∷ yss))
+    here : ∀ {xs xss yss} → Subseq xss yss → Subseq (now (xs ∷ xss)) (now (xs ∷ yss))
     there : ∀ {xs xss yss} → Subseq xss yss → Subseq (now (xs ∷ xss)) yss
     laterₗ : ∀ {xss yss} → ∞ (Subseq (♭ xss) yss) → Subseq (later xss) yss
     laterᵣ : ∀ {xss yss} → ∞ (Subseq xss (♭ yss)) → Subseq xss (later yss)
@@ -89,13 +89,13 @@ module Properties where
     go-xss-is-Subseq-of-xss mxs (now []) = nil
     go-xss-is-Subseq-of-xss mxs (now (xs ∷ now [])) with mxs ≟ just xs
     go-xss-is-Subseq-of-xss mxs (now (xs ∷ now [])) | yes p = there nil
-    go-xss-is-Subseq-of-xss mxs (now (xs ∷ now [])) | no ¬p = here PropEq.refl nil
+    go-xss-is-Subseq-of-xss mxs (now (xs ∷ now [])) | no ¬p = here nil
     go-xss-is-Subseq-of-xss mxs (now (xs ∷ now (ys ∷ yss))) with mxs ≟ just xs
     go-xss-is-Subseq-of-xss mxs (now (xs ∷ now (ys ∷ yss))) | yes p = there (go-xss-is-Subseq-of-xss mxs (now (ys ∷ yss)))
-    go-xss-is-Subseq-of-xss mxs (now (xs ∷ now (ys ∷ yss))) | no ¬p = here PropEq.refl (go-xss-is-Subseq-of-xss (just xs) (now (ys ∷ yss)))
+    go-xss-is-Subseq-of-xss mxs (now (xs ∷ now (ys ∷ yss))) | no ¬p = here (go-xss-is-Subseq-of-xss (just xs) (now (ys ∷ yss)))
     go-xss-is-Subseq-of-xss mxs (now (xs ∷ later xss)) with mxs ≟ just xs
     go-xss-is-Subseq-of-xss mxs (now (xs ∷ later xss)) | yes p = there (laterₗ (♯ laterᵣ (♯ (go-xss-is-Subseq-of-xss mxs (♭ xss)))))
-    go-xss-is-Subseq-of-xss mxs (now (xs ∷ later xss)) | no ¬p = here PropEq.refl (laterₗ (♯ laterᵣ (♯ (go-xss-is-Subseq-of-xss (just xs) (♭ xss)))))
+    go-xss-is-Subseq-of-xss mxs (now (xs ∷ later xss)) | no ¬p = here (laterₗ (♯ laterᵣ (♯ (go-xss-is-Subseq-of-xss (just xs) (♭ xss)))))
     go-xss-is-Subseq-of-xss mxs (later x) = laterₗ (♯ laterᵣ (♯ go-xss-is-Subseq-of-xss mxs (♭ x)))
 
   as : [ String ]
@@ -111,3 +111,21 @@ module Properties where
   -- どうにかするならData.Colist.Finiteみたいな性質を[_]にも定義し，
   -- Subseqを定めるための前提条件にするとかになる．
   -- ただ出元がIOだとその性質は証明できないんだけどね．
+
+{-
+  -- 入力の部分列になっている性質 Subseq' (later の停止前提版)
+  data Subseq' : [ String ] → [ String ] → Set where
+    nil : Subseq' (now []) (now [])
+    here : ∀ {xs xss yss} → Subseq' xss yss → Subseq' (now (xs ∷ xss)) (now (xs ∷ yss))
+    there : ∀ {xs xss yss} → Subseq' xss yss → Subseq' (now (xs ∷ xss)) yss
+    laterₗ : ∀ {xss yss} → (∃ λ xss' → ♭ xss ⇓ xss' × Subseq' (now xss') yss) → Subseq' (later xss) yss
+    laterᵣ : ∀ {xss yss} → (∃ λ yss' → ♭ yss ⇓ yss' × Subseq' xss (now yss')) → Subseq' xss (later yss)
+-}
+  -- これは示せないはず(Subseq'のlaterはCoinductiveじゃないのでxssの分解では証明が止まらないだろう)
+  -- uniq-xss-is-Subseq'-of-xss : ∀ xss → Subseq' xss (uniq xss)
+  -- uniq-xss-is-Subseq'-of-xss = ?
+{-
+  -- xssがFiniteならばSubseq'も示せる(はず)
+  uniq-xss-is-Subseq'-of-finite-xss : ∀ {xss} → Finite xss → Subseq' xss (uniq xss)
+  uniq-xss-is-Subseq'-of-finite-xss = ?
+-}
