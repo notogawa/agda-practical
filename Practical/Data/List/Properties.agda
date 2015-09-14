@@ -50,8 +50,16 @@ module WithoutHang {a b ℓ₁ ℓ₂} {A : Set a} {B : Set b} (_∼_ : [ A ]' �
   open import Data.Product
   open import Data.Sum
 
-  -- 特定イベント列により，都度都度Hangしてないことを確かめられる
+  -- 特定イベント列の投入により，出力が有限になる．
   -- たとえば，"\nQUIT\n"と打つといつでもそこで終わってくれるみたいなイメージ
+  CanQuit : (f : [ A ] → [ B ]) → Set (a ⊔ b ⊔ ℓ₁ ⊔ ℓ₂)
+  CanQuit f = -- 任意の有限なpresと，(有限かどうかはわからない)postsに対し，
+               ∀ {pres posts} → FA.Finite pres →
+               -- 特定シーケンスを叩き込むと終了させることができる
+               ∃ (λ probes → FB.Finite (f (pres ++ probes ++ posts)))
+
+  -- 特定イベント列により，都度都度Hangしてないことを確かめられる
+  -- たとえば，"\nHELO\n"と打つといつでも"WORLD"と出力してくれるみたいなイメージ
   -- インタラクティブ性として求められる性質はコレ
   Probable : (f : [ A ] → [ B ]) → Set (a ⊔ b ⊔ ℓ₁ ⊔ ℓ₂)
   Probable f = -- 任意の有限なpresと，(有限かどうかはわからない)postsに対し，
