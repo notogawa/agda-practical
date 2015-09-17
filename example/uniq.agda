@@ -31,10 +31,10 @@ module Properties where
 
   import Relation.Binary.PropositionalEquality as PropEq
   open PropEq using (_≡_; refl; _≢_; cong)
-  open Equality {A = [ String ]'} (_≡_)
+  module E = Equality {A = [ String ]'} (_≡_)
 
   -- xss が空リストに評価される値ならば，uniq xssも空リストに評価される
-  uniq[]-is-[] : ∀ xss → xss ⇓ [] → uniq xss ⇓ []
+  uniq[]-is-[] : ∀ xss → xss E.⇓ [] → uniq xss E.⇓ []
   uniq[]-is-[] ._ (Equality.now x∼y) rewrite x∼y = Equality.now PropEq.refl
   uniq[]-is-[] ._ (Equality.laterˡ {x = x} x₁) = Equality.laterˡ (uniq[]-is-[] (♭ x) x₁)
 
@@ -112,20 +112,67 @@ module Properties where
   -- Subseqを定めるための前提条件にするとかになる．
   -- ただ出元がIOだとその性質は証明できないんだけどね．
 
-{-
+  -- というかそもそもSubseqなら有限の場合のみでしか，
+  -- その性質の意味が無いんだから，Finiteは仮定していい
+  open import Data.Product
+  open import Practical.Data.List.Properties
+  open Finite {A = String} (_≡_)
+
   -- 入力の部分列になっている性質 Subseq' (later の停止前提版)
-  data Subseq' : [ String ] → [ String ] → Set where
-    nil : Subseq' (now []) (now [])
-    here : ∀ {xs xss yss} → Subseq' xss yss → Subseq' (now (xs ∷ xss)) (now (xs ∷ yss))
-    there : ∀ {xs xss yss} → Subseq' xss yss → Subseq' (now (xs ∷ xss)) yss
-    laterₗ : ∀ {xss yss} → (∃ λ xss' → ♭ xss ⇓ xss' × Subseq' (now xss') yss) → Subseq' (later xss) yss
-    laterᵣ : ∀ {xss yss} → (∃ λ yss' → ♭ yss ⇓ yss' × Subseq' xss (now yss')) → Subseq' xss (later yss)
--}
+  data Subseq' : ∀ {xss yss : [ String ]} → Finite xss → Finite yss → Set where
+    nil : Subseq' [] []
+    here : ∀ {xs xss yss} {finxss : Finite xss} {finyss : Finite yss} → Subseq' finxss finxss → Subseq' (xs ∷ finxss) (xs ∷ finyss)
+    there : ∀ {xs xss yss} {finxss : Finite xss} {finyss : Finite yss} → Subseq' finxss finxss → Subseq' (xs ∷ finxss) finyss
+--    laterₗ : ∀ {xss yss} → (∃ λ xss' → ♭ xss ⇓ xss' × Subseq' xss' yss) → Subseq' (later xss) yss
+--    laterᵣ : ∀ {xss yss} → (∃ λ yss' → ♭ yss ⇓ yss' × Subseq' xss yss') → Subseq' xss (later yss)
+
   -- これは示せないはず(Subseq'のlaterはCoinductiveじゃないのでxssの分解では証明が止まらないだろう)
   -- uniq-xss-is-Subseq'-of-xss : ∀ xss → Subseq' xss (uniq xss)
   -- uniq-xss-is-Subseq'-of-xss = ?
+
+  go[]-is-[] : ∀ mxs xss → xss E.⇓ [] → go mxs xss E.⇓ []
+  go[]-is-[] mxs ._ (Equality.now x∼y) rewrite x∼y = Equality.now PropEq.refl
+  go[]-is-[] mxs ._ (Equality.laterˡ {x = x} x₁) = Equality.laterˡ (go[]-is-[] mxs (♭ x) x₁)
+
+  go-xss≈go-whnf-xss : ∀ mxs xss yss → xss E.⇓ yss → go mxs xss E.≈ go mxs (now yss)
+  go-xss≈go-whnf-xss mxs .(now yss) yss (Equality.now PropEq.refl) = Equivalence.refl PropEq.refl where open Equivalence
+  go-xss≈go-whnf-xss mxs ._ yss (Equality.laterˡ {x = xss} e) = Equality.laterˡ (go-xss≈go-whnf-xss mxs (♭ xss) yss e)
+
+  finite-go-has-whnf : ∀ {xss} → (mxs : Maybe String) → Finite xss → ∃ λ yss → go mxs xss E.⇓ yss
+  finite-go-has-whnf mxs [] = [] , Equality.now PropEq.refl
+  finite-go-has-whnf mxs (x ∷ []) with mxs ≟ just x
+  finite-go-has-whnf mxs (x ∷ []) | yes p = [] , Equality.now PropEq.refl
+  finite-go-has-whnf mxs (x ∷ []) | no ¬p = x ∷ now [] , Equality.now PropEq.refl
+  finite-go-has-whnf mxs (x ∷ (x₁ ∷ fin)) with mxs ≟ just x
+  finite-go-has-whnf mxs (x ∷ (x₁ ∷ fin)) | yes p = finite-go-has-whnf mxs (x₁ ∷ fin)
+  finite-go-has-whnf mxs (x ∷ (_∷_  x₁ {xss} fin)) | no ¬p = (x ∷ go (just x) (now (x₁ ∷ xss))) , Equality.now PropEq.refl
+  finite-go-has-whnf mxs (x ∷ later {xs} fin) with mxs ≟ just x
+  finite-go-has-whnf mxs (x ∷ later {xs} fin) | yes p = finite-go-has-whnf mxs (later fin)
+  finite-go-has-whnf mxs (x ∷ later {xs} fin) | no ¬p = x ∷ go (just x) (later xs) , Equality.now PropEq.refl
+  finite-go-has-whnf mxs (later {xs} (ys , finys , proj₃)) with finite-go-has-whnf mxs proj₃
+  ... | p = proj₁ p , Equivalence.trans PropEq.trans (go-xss≈go-whnf-xss mxs (later xs) ys finys) (proj₂ p) where open Equivalence
+
+  finite-uniq-has-whnf : ∀ {xss} → Finite xss → ∃ λ yss → uniq xss E.⇓ yss
+  finite-uniq-has-whnf = finite-go-has-whnf nothing
 {-
+  uniq-finite-is-finite : ∀ {xss} → Finite xss → Finite (uniq xss)
+  uniq-finite-is-finite = go-finite-is-finite nothing where
+    go-finite-is-finite : ∀ {xss} → (mxs : Maybe String) → Finite xss → Finite (go mxs xss)
+    go-finite-is-finite mxs [] = []
+    go-finite-is-finite mxs (x ∷ []) with mxs ≟ just x
+    go-finite-is-finite mxs (x ∷ []) | yes p = []
+    go-finite-is-finite mxs (x ∷ []) | no ¬p = x ∷ []
+    go-finite-is-finite mxs (x ∷ (x₁ ∷ fin)) with mxs ≟ just x
+    go-finite-is-finite mxs (x ∷ (x₁ ∷ fin)) | yes p = go-finite-is-finite mxs (x₁ ∷ fin)
+    go-finite-is-finite mxs (x ∷ (x₁ ∷ fin)) | no ¬p = x ∷ go-finite-is-finite (just x) (x₁ ∷ fin)
+    go-finite-is-finite mxs (x ∷ later fin) with mxs ≟ just x
+    go-finite-is-finite mxs (x ∷ later fin) | yes p = go-finite-is-finite mxs (later fin)
+    go-finite-is-finite mxs (x ∷ later fin) | no ¬p = x ∷ go-finite-is-finite (just x) (later fin)
+    go-finite-is-finite mxs (later {xs} fin) with finite-go-has-whnf mxs (later fin)
+    go-finite-is-finite mxs (Finite.later fin) | [] , proj₂ = {!!}
+    go-finite-is-finite mxs (Finite.later fin) | x ∷ xs₁ , proj₂ = {!!}
+
   -- xssがFiniteならばSubseq'も示せる(はず)
-  uniq-xss-is-Subseq'-of-finite-xss : ∀ {xss} → Finite xss → Subseq' xss (uniq xss)
-  uniq-xss-is-Subseq'-of-finite-xss = ?
+  uniq-xss-is-Subseq'-of-xss : ∀ {xss} → (finxss : Finite xss) → Subseq' finxss (uniq-finite-is-finite finxss)
+  uniq-xss-is-Subseq'-of-xss = {!!}
 -}
