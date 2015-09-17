@@ -25,7 +25,7 @@ module TestFinite where
   open import Data.Product
 
   test-Finite-1 : Finite (later (♯ now (1 ∷ now [])))
-  test-Finite-1 = later (1 ∷ _ , Equality.laterˡ (Equality.now PropEq.refl) , 1 ∷ [])
+  test-Finite-1 = later (1 ∷ _ , Equality.laterˡ (Equality.now refl) , 1 ∷ [])
 
   test-Finite-2 : Finite (later (♯ now (1 ∷ later (♯ now (2 ∷ now (3 ∷ now []))))))
   test-Finite-2 = later (1 ∷ _ , Equality.laterˡ (Equality.now refl) , 1 ∷ later (2 ∷ _ , Equality.laterˡ (Equality.now refl) , 2 ∷ (3 ∷ [])))
@@ -37,10 +37,6 @@ module TestFinite where
   -- 無限リストに対しては示せない(今回の場合停止性が)
   -- test-Finite-3 : Finite ones
   -- test-Finite-3 = 1 ∷ later (1 ∷ _ , Equality.laterˡ (Equality.now refl) , test-Finite-3)
-  --
-  -- だが，これは人の直観としては本来示せるべきもののようにも思われる？
-  -- onesをcopatternsとかで定義できるなら示せる？
-  -- 「コード生成を前提にしている以上，現時点ではFinite」？
 
 module WithoutHang {a b ℓ₁ ℓ₂} {A : Set a} {B : Set b} (_∼_ : [ A ]' → [ A ]' → Set ℓ₁) (_≈_ : [ B ]' → [ B ]' → Set ℓ₂) where
 
@@ -50,22 +46,14 @@ module WithoutHang {a b ℓ₁ ℓ₂} {A : Set a} {B : Set b} (_∼_ : [ A ]' �
   open import Data.Product
   open import Data.Sum
 
-  -- 特定イベント列の投入により，出力が有限になる．
-  -- たとえば，"\nQUIT\n"と打つといつでもそこで終わってくれるみたいなイメージ
-  CanQuit : (f : [ A ] → [ B ]) → Set (a ⊔ b ⊔ ℓ₁ ⊔ ℓ₂)
-  CanQuit f = -- 任意の有限なpresと，(有限かどうかはわからない)postsに対し，
-               ∀ {pres posts} → FA.Finite pres →
-               -- 特定シーケンスを叩き込むと終了させることができる
-               ∃ (λ probes → FB.Finite (f (pres ++ probes ++ posts)))
-
   -- 特定イベント列により，都度都度Hangしてないことを確かめられる
-  -- たとえば，"\nHELO\n"と打つといつでも"WORLD"と出力してくれるみたいなイメージ
+  -- たとえば，"\nQUIT\n"と打つといつでもそこで終わってくれるみたいなイメージ
   -- インタラクティブ性として求められる性質はコレ
-  Probable : (f : [ A ] → [ B ]) → Set (a ⊔ b ⊔ ℓ₁ ⊔ ℓ₂)
-  Probable f = -- 任意の有限なpresと，(有限かどうかはわからない)postsに対し，
-               ∀ {pres posts} → FA.Finite pres →
-               -- 特定シーケンスを叩き込むと何かを起こせる(presではHangしないことが観測できる)
-               ∃ (λ probes → {!「f (pres ++ posts) と f (pres ++ probes ++ posts) で後者は何か要素が取り出せる状態になる」みたいな 考え中!})
+  -- Probable : (f : [ A ] → [ B ]) → Set (a ⊔ b ⊔ ℓ₁ ⊔ ℓ₂)
+  -- Probable f = -- 任意の有限なpresと，(有限かどうかはわからない)postsに対し，
+  --              ∀ {pres posts} → FA.Finite pres →
+  --              -- 特定シーケンスを叩き込むと何かを起こせる(presではHangしないことが観測できる)
+  --              ∃ (λ probes → {!「f (pres ++ posts) と f (pres ++ probes ++ posts) で後者は何か要素が取り出せる状態になる」みたいな 考え中!})
 
   -- 任意の入力に対してHangしない
   -- headコマンドみたいなのに求められる性質
