@@ -126,10 +126,14 @@ module Properties where
   -- 入力の部分列になっている性質 Subseq (later の停止前提版)
   data Subseq : ∀ {xss yss : [ String ]} → Finite xss → Finite yss → Set where
     nil : Subseq [] []
-    here : ∀ {xs xss yss} {finxss : Finite xss} {finyss : Finite yss} → Subseq finxss finxss → Subseq (xs ∷ finxss) (xs ∷ finyss)
-    there : ∀ {xs xss yss} {finxss : Finite xss} {finyss : Finite yss} → Subseq finxss finxss → Subseq (xs ∷ finxss) finyss
---    laterₗ : ∀ {xss yss} → (∃ λ xss' → ♭ xss ⇓ xss' × Subseq xss' yss) → Subseq (later xss) yss
---    laterᵣ : ∀ {xss yss} → (∃ λ yss' → ♭ yss ⇓ yss' × Subseq xss yss') → Subseq xss (later yss)
+    here : ∀ {xs xss yss} {finxss : Finite xss} {finyss : Finite yss} →
+           Subseq finxss finxss → Subseq (xs ∷ finxss) (xs ∷ finyss)
+    there : ∀ {xs xss yss} {finxss : Finite xss} {finyss : Finite yss} →
+           Subseq finxss finxss → Subseq (xs ∷ finxss) finyss
+    laterₗ : ∀ {xss xss' xss⇓xss' finxss' yss} {finyss : Finite yss} →
+             Subseq finxss' finyss → Subseq (later {xs = xss} (xss' , xss⇓xss' , finxss')) finyss
+    laterᵣ : ∀ {xss yss yss' yss⇓yss' finyss'} {finxss : Finite xss} →
+             Subseq finxss finyss' → Subseq finxss (later {xs = yss} (yss' , yss⇓yss' , finyss'))
 
   -- これは示せないはず(SubseqのlaterはCoinductiveじゃないのでxssの分解では証明が止まらないだろう)
   -- uniq-xss-is-Subseq-of-xss : ∀ xss → Subseq xss (uniq xss)
@@ -181,8 +185,27 @@ module Properties where
   -- 有限リストに対するuniqも有限リスト
   uniq-finite-is-finite : ∀ {xss} → Finite xss → Finite (uniq xss)
   uniq-finite-is-finite = shrink-finite-is-finite nothing
+
+  Subseq-refl : ∀ {xss} → (finxss : Finite xss) → Subseq finxss finxss
+  Subseq-refl [] = nil
+  Subseq-refl (x ∷ finxss) = here (Subseq-refl finxss)
+  Subseq-refl (later (proj₁ , proj₂ , proj₃)) = laterₗ (laterᵣ (Subseq-refl proj₃))
 {-
+  shrink-xss-is-Subseq-of-xss : ∀ {xss} → (prev : Maybe String) → (finxss : Finite xss) →
+                                Subseq finxss (shrink-finite-is-finite prev finxss)
+  shrink-xss-is-Subseq-of-xss prev [] = nil
+  shrink-xss-is-Subseq-of-xss prev (x ∷ []) with prev ≟ just x
+  shrink-xss-is-Subseq-of-xss prev (x ∷ []) | yes p = there nil
+  shrink-xss-is-Subseq-of-xss prev (x ∷ []) | no ¬p = here nil
+  shrink-xss-is-Subseq-of-xss prev (x ∷ (x₁ ∷ finxss)) with prev ≟ just x
+  shrink-xss-is-Subseq-of-xss prev (x ∷ (x₁ ∷ finxss)) | yes p = there (here (Subseq-refl finxss))
+  shrink-xss-is-Subseq-of-xss prev (x ∷ (x₁ ∷ finxss)) | no ¬p = here (here (Subseq-refl finxss))
+  shrink-xss-is-Subseq-of-xss prev (x ∷ later fin) with prev ≟ just x
+  shrink-xss-is-Subseq-of-xss prev (x ∷ later fin) | yes p = there (Subseq-refl (later fin))
+  shrink-xss-is-Subseq-of-xss prev (x ∷ later fin) | no ¬p = here (Subseq-refl (later fin))
+  shrink-xss-is-Subseq-of-xss prev (later {xs} (ys , xs⇓ys , finys)) = laterₗ {!!}
+
   -- xssがFiniteならばSubseqも示せる(はず)
   uniq-xss-is-Subseq-of-xss : ∀ {xss} → (finxss : Finite xss) → Subseq finxss (uniq-finite-is-finite finxss)
-  uniq-xss-is-Subseq-of-xss = {!!}
+  uniq-xss-is-Subseq-of-xss = shrink-xss-is-Subseq-of-xss nothing
 -}
