@@ -73,30 +73,30 @@ module Properties where
     go-is-Uniq mxs (now (xs ∷ later xss)) | no ¬p = later2 (♯ go-is-Uniq nothing (now (xs ∷ ♭ xss)))
     go-is-Uniq mxs (later xss) = later1 (♯ go-is-Uniq mxs (♭ xss))
 
-  -- 入力の部分列になっている性質 Subseq
-  data Subseq : [ String ] → [ String ] → Set where
-    nil : Subseq (now []) (now [])
-    here : ∀ {xs xss yss} → Subseq xss yss → Subseq (now (xs ∷ xss)) (now (xs ∷ yss))
-    there : ∀ {xs xss yss} → Subseq xss yss → Subseq (now (xs ∷ xss)) yss
-    laterₗ : ∀ {xss yss} → ∞ (Subseq (♭ xss) yss) → Subseq (later xss) yss
-    laterᵣ : ∀ {xss yss} → ∞ (Subseq xss (♭ yss)) → Subseq xss (later yss)
+  -- 入力の部分列になっている性質 BadSubseq (ただし，この定義には問題がある．後述)
+  data BadSubseq : [ String ] → [ String ] → Set where
+    nil : BadSubseq (now []) (now [])
+    here : ∀ {xs xss yss} → BadSubseq xss yss → BadSubseq (now (xs ∷ xss)) (now (xs ∷ yss))
+    there : ∀ {xs xss yss} → BadSubseq xss yss → BadSubseq (now (xs ∷ xss)) yss
+    laterₗ : ∀ {xss yss} → ∞ (BadSubseq (♭ xss) yss) → BadSubseq (later xss) yss
+    laterᵣ : ∀ {xss yss} → ∞ (BadSubseq xss (♭ yss)) → BadSubseq xss (later yss)
 
-  -- 関数uniqの結果が元の列に対しSubseqを満たす
-  uniq-xss-is-Subseq-of-xss : ∀ xss → Subseq xss (uniq xss)
-  uniq-xss-is-Subseq-of-xss = go-xss-is-Subseq-of-xss nothing where
-    -- goがSubseqを満たすこと
-    go-xss-is-Subseq-of-xss : ∀ mxs xss → Subseq xss (go mxs xss)
-    go-xss-is-Subseq-of-xss mxs (now []) = nil
-    go-xss-is-Subseq-of-xss mxs (now (xs ∷ now [])) with mxs ≟ just xs
-    go-xss-is-Subseq-of-xss mxs (now (xs ∷ now [])) | yes p = there nil
-    go-xss-is-Subseq-of-xss mxs (now (xs ∷ now [])) | no ¬p = here nil
-    go-xss-is-Subseq-of-xss mxs (now (xs ∷ now (ys ∷ yss))) with mxs ≟ just xs
-    go-xss-is-Subseq-of-xss mxs (now (xs ∷ now (ys ∷ yss))) | yes p = there (go-xss-is-Subseq-of-xss mxs (now (ys ∷ yss)))
-    go-xss-is-Subseq-of-xss mxs (now (xs ∷ now (ys ∷ yss))) | no ¬p = here (go-xss-is-Subseq-of-xss (just xs) (now (ys ∷ yss)))
-    go-xss-is-Subseq-of-xss mxs (now (xs ∷ later xss)) with mxs ≟ just xs
-    go-xss-is-Subseq-of-xss mxs (now (xs ∷ later xss)) | yes p = there (laterₗ (♯ laterᵣ (♯ (go-xss-is-Subseq-of-xss mxs (♭ xss)))))
-    go-xss-is-Subseq-of-xss mxs (now (xs ∷ later xss)) | no ¬p = here (laterₗ (♯ laterᵣ (♯ (go-xss-is-Subseq-of-xss (just xs) (♭ xss)))))
-    go-xss-is-Subseq-of-xss mxs (later x) = laterₗ (♯ laterᵣ (♯ go-xss-is-Subseq-of-xss mxs (♭ x)))
+  -- 関数uniqの結果が元の列に対しBadSubseqを満たす
+  uniq-xss-is-BadSubseq-of-xss : ∀ xss → BadSubseq xss (uniq xss)
+  uniq-xss-is-BadSubseq-of-xss = go-xss-is-BadSubseq-of-xss nothing where
+    -- goがBadSubseqを満たすこと
+    go-xss-is-BadSubseq-of-xss : ∀ mxs xss → BadSubseq xss (go mxs xss)
+    go-xss-is-BadSubseq-of-xss mxs (now []) = nil
+    go-xss-is-BadSubseq-of-xss mxs (now (xs ∷ now [])) with mxs ≟ just xs
+    go-xss-is-BadSubseq-of-xss mxs (now (xs ∷ now [])) | yes p = there nil
+    go-xss-is-BadSubseq-of-xss mxs (now (xs ∷ now [])) | no ¬p = here nil
+    go-xss-is-BadSubseq-of-xss mxs (now (xs ∷ now (ys ∷ yss))) with mxs ≟ just xs
+    go-xss-is-BadSubseq-of-xss mxs (now (xs ∷ now (ys ∷ yss))) | yes p = there (go-xss-is-BadSubseq-of-xss mxs (now (ys ∷ yss)))
+    go-xss-is-BadSubseq-of-xss mxs (now (xs ∷ now (ys ∷ yss))) | no ¬p = here (go-xss-is-BadSubseq-of-xss (just xs) (now (ys ∷ yss)))
+    go-xss-is-BadSubseq-of-xss mxs (now (xs ∷ later xss)) with mxs ≟ just xs
+    go-xss-is-BadSubseq-of-xss mxs (now (xs ∷ later xss)) | yes p = there (laterₗ (♯ laterᵣ (♯ (go-xss-is-BadSubseq-of-xss mxs (♭ xss)))))
+    go-xss-is-BadSubseq-of-xss mxs (now (xs ∷ later xss)) | no ¬p = here (laterₗ (♯ laterᵣ (♯ (go-xss-is-BadSubseq-of-xss (just xs) (♭ xss)))))
+    go-xss-is-BadSubseq-of-xss mxs (later x) = laterₗ (♯ laterᵣ (♯ go-xss-is-BadSubseq-of-xss mxs (♭ x)))
 
   as : [ String ]
   as = now ("a" ∷ later (♯ as))
@@ -106,10 +106,10 @@ module Properties where
 
   -- これがダメな(「ダメとしたい」)やつだけど弾けない，
   -- 無限である以上「いつか来るかもしれない」ため仕方ないのだがー
-  bad-prop : Subseq as bs
+  bad-prop : BadSubseq as bs
   bad-prop = there (laterₗ (♯ bad-prop))
   -- どうにかするならData.Colist.Finiteみたいな性質を[_]にも定義し，
-  -- Subseqを定めるための前提条件にするとかになる．
+  -- BadSubseqを定めるための前提条件にするとかになる．
   -- ただ出元がIOだとその性質は証明できないんだけどね．
 
   -- というかそもそもSubseqなら有限の場合のみでしか，
@@ -117,17 +117,17 @@ module Properties where
   open import Data.Product
   open import Practical.Data.List.Properties
 
-  -- 入力の部分列になっている性質 Subseq' (later の停止前提版)
-  data Subseq' : ∀ {xss yss : [ String ]} → Finite xss → Finite yss → Set where
-    nil : Subseq' [] []
-    here : ∀ {xs xss yss} {finxss : Finite xss} {finyss : Finite yss} → Subseq' finxss finxss → Subseq' (xs ∷ finxss) (xs ∷ finyss)
-    there : ∀ {xs xss yss} {finxss : Finite xss} {finyss : Finite yss} → Subseq' finxss finxss → Subseq' (xs ∷ finxss) finyss
---    laterₗ : ∀ {xss yss} → (∃ λ xss' → ♭ xss ⇓ xss' × Subseq' xss' yss) → Subseq' (later xss) yss
---    laterᵣ : ∀ {xss yss} → (∃ λ yss' → ♭ yss ⇓ yss' × Subseq' xss yss') → Subseq' xss (later yss)
+  -- 入力の部分列になっている性質 Subseq (later の停止前提版)
+  data Subseq : ∀ {xss yss : [ String ]} → Finite xss → Finite yss → Set where
+    nil : Subseq [] []
+    here : ∀ {xs xss yss} {finxss : Finite xss} {finyss : Finite yss} → Subseq finxss finxss → Subseq (xs ∷ finxss) (xs ∷ finyss)
+    there : ∀ {xs xss yss} {finxss : Finite xss} {finyss : Finite yss} → Subseq finxss finxss → Subseq (xs ∷ finxss) finyss
+--    laterₗ : ∀ {xss yss} → (∃ λ xss' → ♭ xss ⇓ xss' × Subseq xss' yss) → Subseq (later xss) yss
+--    laterᵣ : ∀ {xss yss} → (∃ λ yss' → ♭ yss ⇓ yss' × Subseq xss yss') → Subseq xss (later yss)
 
-  -- これは示せないはず(Subseq'のlaterはCoinductiveじゃないのでxssの分解では証明が止まらないだろう)
-  -- uniq-xss-is-Subseq'-of-xss : ∀ xss → Subseq' xss (uniq xss)
-  -- uniq-xss-is-Subseq'-of-xss = ?
+  -- これは示せないはず(SubseqのlaterはCoinductiveじゃないのでxssの分解では証明が止まらないだろう)
+  -- uniq-xss-is-Subseq-of-xss : ∀ xss → Subseq xss (uniq xss)
+  -- uniq-xss-is-Subseq-of-xss = ?
 
   go[]-is-[] : ∀ mxs xss → xss E.⇓ [] → go mxs xss E.⇓ []
   go[]-is-[] mxs ._ (Equality.now x∼y) rewrite x∼y = Equality.now PropEq.refl
@@ -171,7 +171,7 @@ module Properties where
     go-finite-is-finite mxs (Finite.later fin) | [] , proj₂ = {!!}
     go-finite-is-finite mxs (Finite.later fin) | x ∷ xs₁ , proj₂ = {!!}
 
-  -- xssがFiniteならばSubseq'も示せる(はず)
-  uniq-xss-is-Subseq'-of-xss : ∀ {xss} → (finxss : Finite xss) → Subseq' finxss (uniq-finite-is-finite finxss)
-  uniq-xss-is-Subseq'-of-xss = {!!}
+  -- xssがFiniteならばSubseqも示せる(はず)
+  uniq-xss-is-Subseq-of-xss : ∀ {xss} → (finxss : Finite xss) → Subseq finxss (uniq-finite-is-finite finxss)
+  uniq-xss-is-Subseq-of-xss = {!!}
 -}
