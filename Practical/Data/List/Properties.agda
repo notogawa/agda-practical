@@ -42,6 +42,40 @@ module TestFinite where
   -- test-Finite-3 : Finite ones
   -- test-Finite-3 = 1 ∷ later (1 ∷ _ , Equality.laterˡ (Equality.now refl) , test-Finite-3)
 
+-- リストの無限性(ただし，無限に値が出てくるもの，つまり，neverではないことに注意)
+data Infinite {a} {A : Set a} : [ A ] → Set a where
+  _∷_  : ∀ x {xs} → (inf : Infinite xs) → Infinite (now (x ∷ xs))
+  later : let open Equality {A = [ A ]'} (_≡_)
+          in ∀ {xs} → (inf : ∃ (λ ys → later xs ⇓ ys × ∞ (Infinite (now ys)))) → Infinite (later xs)
+
+-- 無限リストはWHNFを持つ(now hogeになる，neverではない)
+Infinite-has-whnf : ∀ {a} {A : Set a} {xss : [ A ]} →
+                  let open Equality {A = [ A ]'} (_≡_)
+                  in Infinite xss → ∃ λ whnf → xss ⇓ whnf
+Infinite-has-whnf (_∷_ x {xs} inf) = x ∷ xs , Equality.now refl
+Infinite-has-whnf (later {xs} (ys , xs⇓ys , inf)) = ys , xs⇓ys
+
+module TestInfinite where
+
+  open PropEq using (_≢_; cong)
+  open import Data.Nat
+  open import Data.Product
+
+  -- 無限リストはどうか
+  ones : [ ℕ ]
+  ones = now (1 ∷ later (♯ ones))
+
+  test-Infinite-1 : Infinite ones
+  test-Infinite-1 = 1 ∷ later (1 ∷ _ , Equality.laterˡ (Equality.now refl) , ♯ test-Infinite-1)
+
+  open import Relation.Nullary
+  open import Data.Unit using (tt)
+  open import Relation.Binary
+
+  -- neverは無限リストではない
+  test-Infinite-2 : ¬ Infinite (never {A  = [ ℕ ]'})
+  test-Infinite-2 (later (proj₁ , proj₂ , proj₃)) = now≉never (Equivalence.sym PropEq.sym tt proj₂)
+
 module WithoutHang {a b} (A : Set a) (B : Set b) where
 
   open import Level using (_⊔_)
