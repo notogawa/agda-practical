@@ -3,25 +3,29 @@ module Practical.Data.List.Properties where
 open import Coinduction
 open import Practical.Data.List
 open import Category.Monad.Partiality hiding (map)
+import Relation.Binary.PropositionalEquality as PropEq
+open PropEq using (_≡_; refl)
+open import Data.Product
 
--- リストが有限であるという性質
-module Finite {a ℓ} {A : Set a} (_∼_ : [ A ]' → [ A ]' → Set ℓ) where
+-- リストの有限性
+data Finite {a} {A : Set a} : [ A ] → Set a where
+  []  : Finite (now [])
+  _∷_  : ∀ x {xs} → (fin : Finite xs) → Finite (now (x ∷ xs))
+  later : let open Equality {A = [ A ]'} (_≡_)
+          in ∀ {xs} → (fin : ∃ (λ ys → later xs ⇓ ys × Finite (now ys))) → Finite (later xs)
 
-  open import Level using (_⊔_)
-  open Equality {A = [ A ]'} (_∼_)
-  open import Data.Product
-
-  data Finite : [ A ] → Set (a ⊔ ℓ) where
-    []  : Finite (now [])
-    _∷_  : ∀ x {xs} → (fin : Finite xs) → Finite (now (x ∷ xs))
-    later : ∀ {xs} → (fin : ∃ (λ ys → later xs ⇓ ys × Finite (now ys))) → Finite (later xs)
+-- 有限リストはWHNFを持つ(now hogeになる，neverではない)
+Finite-has-whnf : ∀ {a} {A : Set a} {xss : [ A ]} →
+                  let open Equality {A = [ A ]'} (_≡_)
+                  in Finite xss → ∃ λ whnf → xss ⇓ whnf
+Finite-has-whnf [] = [] , Equality.now refl
+Finite-has-whnf (_∷_ x {xs} fin) = x ∷ xs , Equality.now refl
+Finite-has-whnf (later {xs} (ys , xs⇓ys , fin)) = ys , xs⇓ys
 
 module TestFinite where
 
-  import Relation.Binary.PropositionalEquality as PropEq
-  open PropEq using (_≡_; refl; _≢_; cong)
+  open PropEq using (_≢_; cong)
   open import Data.Nat
-  open Finite {A = ℕ} (_≡_)
   open import Data.Product
 
   test-Finite-1 : Finite (later (♯ now (1 ∷ now [])))
@@ -34,14 +38,12 @@ module TestFinite where
   ones : [ ℕ ]
   ones = now (1 ∷ later (♯ ones))
 
-  -- 無限リストに対しては示せない(今回の場合停止性が)
+  -- 無限リストに対しては示せない(今回の場合，停止性が)
   -- test-Finite-3 : Finite ones
   -- test-Finite-3 = 1 ∷ later (1 ∷ _ , Equality.laterˡ (Equality.now refl) , test-Finite-3)
 
-module WithoutHang {a b ℓ₁ ℓ₂} {A : Set a} {B : Set b} (_∼_ : [ A ]' → [ A ]' → Set ℓ₁) (_≈_ : [ B ]' → [ B ]' → Set ℓ₂) where
+module WithoutHang {a b} (A : Set a) (B : Set b) where
 
-  module FA = Finite {A = A} (_∼_)
-  module FB = Finite {A = B} (_≈_)
   open import Level using (_⊔_)
   open import Data.Product
   open import Data.Sum
@@ -57,18 +59,18 @@ module WithoutHang {a b ℓ₁ ℓ₂} {A : Set a} {B : Set b} (_∼_ : [ A ]' �
 
   -- 任意の入力に対してHangしない
   -- headコマンドみたいなのに求められる性質
-  Fin : (f : [ A ] → [ B ]) → Set (a ⊔ b ⊔ ℓ₂)
+  Fin : (f : [ A ] → [ B ]) → Set (a ⊔ b)
   Fin f = -- (有限かもわからない)任意の入力について，
           ∀ {xs} →
           -- 出力有限で終わる
-          FB.Finite (f xs)
+          Finite (f xs)
 
   -- 終わりまで読まないと結果が出せないけど，終わりまで読めるならHangしない
   -- sortコマンドみたいなのに求められる性質
-  RequireAll : (f : [ A ] → [ B ]) → Set (a ⊔ b ⊔ ℓ₁ ⊔ ℓ₂)
+  RequireAll : (f : [ A ] → [ B ]) → Set (a ⊔ b)
   RequireAll f = -- 任意の入力について，
                  ∀ {xs} →
                  -- 入力有限なら，
-                 FA.Finite xs →
+                 Finite xs →
                  -- 出力有限で終わる
-                 FB.Finite (f xs)
+                 Finite (f xs)

@@ -116,7 +116,6 @@ module Properties where
   -- その性質の意味が無いんだから，Finiteは仮定していい
   open import Data.Product
   open import Practical.Data.List.Properties
-  open Finite {A = String} (_≡_)
 
   -- 入力の部分列になっている性質 Subseq' (later の停止前提版)
   data Subseq' : ∀ {xss yss : [ String ]} → Finite xss → Finite yss → Set where
