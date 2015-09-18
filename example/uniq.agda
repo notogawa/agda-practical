@@ -12,15 +12,15 @@ open import Relation.Binary
 open DecSetoid (Data.Maybe.decSetoid Data.String.decSetoid)
 open import Relation.Nullary
 
-go : Maybe String → [ String ] → [ String ]
-go mx (now []) = now []
-go mx (now (x ∷ xs)) with mx ≟ just x
-... | yes _ = go mx xs
-... | no  _ = now (x ∷ go (just x) xs)
-go mx (later x) = later (♯ go mx (♭ x))
+shrink : Maybe String → [ String ] → [ String ]
+shrink prev (now []) = now []
+shrink prev (now (xs ∷ xss)) with prev ≟ just xs
+... | yes _ = shrink prev xss
+... | no  _ = now (xs ∷ shrink (just xs) xss)
+shrink prev (later xs) = later (♯ shrink prev (♭ xs))
 
 uniq : [ String ] → [ String ]
-uniq = go nothing
+uniq = shrink nothing
 
 main = run (interact (unlines ∘ map (fromList ∘ toList ∘ coloring) ∘ uniq ∘ lines)) where
   coloring : String → String
@@ -33,10 +33,14 @@ module Properties where
   open PropEq using (_≡_; refl; _≢_; cong)
   module E = Equality {A = [ String ]'} (_≡_)
 
+  -- xss が空リストに評価される値ならば，shrink prev xssも空リストに評価される
+  shrink[]-is-[] : ∀ prev xss → xss E.⇓ [] → shrink prev xss E.⇓ []
+  shrink[]-is-[] prev ._ (Equality.now x∼y) rewrite x∼y = Equality.now PropEq.refl
+  shrink[]-is-[] prev ._ (Equality.laterˡ {x = x} x₁) = Equality.laterˡ (shrink[]-is-[] prev (♭ x) x₁)
+
   -- xss が空リストに評価される値ならば，uniq xssも空リストに評価される
   uniq[]-is-[] : ∀ xss → xss E.⇓ [] → uniq xss E.⇓ []
-  uniq[]-is-[] ._ (Equality.now x∼y) rewrite x∼y = Equality.now PropEq.refl
-  uniq[]-is-[] ._ (Equality.laterˡ {x = x} x₁) = Equality.laterˡ (uniq[]-is-[] (♭ x) x₁)
+  uniq[]-is-[] = shrink[]-is-[] nothing
 
   -- 隣接2要素の値が異なるという性質 Uniq
   data Uniq : [ String ] → Set where
@@ -56,61 +60,63 @@ module Properties where
 
   -- 関数uniqの結果が性質Uniqを満たす
   uniq-is-Uniq : ∀ xss → Uniq (uniq xss)
-  uniq-is-Uniq = go-is-Uniq nothing where
-    -- goがUniqを満たすこと
-    go-is-Uniq : ∀ mxs xss → Uniq (go mxs xss)
-    go-is-Uniq mxs (now []) = nil
-    go-is-Uniq mxs (now (xs ∷ now [])) with mxs ≟ just xs
-    go-is-Uniq mxs (now (xs ∷ now [])) | yes p = nil
-    go-is-Uniq mxs (now (xs ∷ now [])) | no ¬p = singleton
-    go-is-Uniq mxs (now (xs ∷ now (ys ∷ yss))) with mxs ≟ just xs
-    go-is-Uniq mxs (now (xs ∷ now (ys ∷ yss))) | yes p = go-is-Uniq mxs (now (ys ∷ yss))
-    go-is-Uniq mxs (now (xs ∷ now (ys ∷ yss))) | no ¬p with just xs ≟ just ys
-    go-is-Uniq mxs (now (xs ∷ now (ys ∷ yss))) | no ¬p | yes (just x≈y) rewrite x≈y = go-is-Uniq nothing (now (ys ∷ yss))
-    go-is-Uniq mxs (now (xs ∷ now (ys ∷ yss))) | no ¬p₁ | no ¬p = cons (λ z → ¬p (just z)) (go-is-Uniq nothing (now (ys ∷ yss)))
-    go-is-Uniq mxs (now (xs ∷ later xss)) with mxs ≟ just xs
-    go-is-Uniq mxs (now (xs ∷ later xss)) | yes p = go-is-Uniq mxs (later xss)
-    go-is-Uniq mxs (now (xs ∷ later xss)) | no ¬p = later2 (♯ go-is-Uniq nothing (now (xs ∷ ♭ xss)))
-    go-is-Uniq mxs (later xss) = later1 (♯ go-is-Uniq mxs (♭ xss))
+  uniq-is-Uniq = shrink-is-Uniq nothing where
+    -- shrinkがUniqを満たすこと
+    shrink-is-Uniq : ∀ prev xss → Uniq (shrink prev xss)
+    shrink-is-Uniq prev (now []) = nil
+    shrink-is-Uniq prev (now (xs ∷ now [])) with prev ≟ just xs
+    shrink-is-Uniq prev (now (xs ∷ now [])) | yes p = nil
+    shrink-is-Uniq prev (now (xs ∷ now [])) | no ¬p = singleton
+    shrink-is-Uniq prev (now (xs ∷ now (ys ∷ yss))) with prev ≟ just xs
+    shrink-is-Uniq prev (now (xs ∷ now (ys ∷ yss))) | yes p = shrink-is-Uniq prev (now (ys ∷ yss))
+    shrink-is-Uniq prev (now (xs ∷ now (ys ∷ yss))) | no ¬p with just xs ≟ just ys
+    shrink-is-Uniq prev (now (xs ∷ now (ys ∷ yss))) | no ¬p | yes (just x≈y) rewrite x≈y = shrink-is-Uniq nothing (now (ys ∷ yss))
+    shrink-is-Uniq prev (now (xs ∷ now (ys ∷ yss))) | no ¬p₁ | no ¬p = cons (λ z → ¬p (just z)) (shrink-is-Uniq nothing (now (ys ∷ yss)))
+    shrink-is-Uniq prev (now (xs ∷ later xss)) with prev ≟ just xs
+    shrink-is-Uniq prev (now (xs ∷ later xss)) | yes p = shrink-is-Uniq prev (later xss)
+    shrink-is-Uniq prev (now (xs ∷ later xss)) | no ¬p = later2 (♯ shrink-is-Uniq nothing (now (xs ∷ ♭ xss)))
+    shrink-is-Uniq prev (later xss) = later1 (♯ shrink-is-Uniq prev (♭ xss))
 
-  -- 入力の部分列になっている性質 BadSubseq (ただし，この定義には問題がある．後述)
-  data BadSubseq : [ String ] → [ String ] → Set where
-    nil : BadSubseq (now []) (now [])
-    here : ∀ {xs xss yss} → BadSubseq xss yss → BadSubseq (now (xs ∷ xss)) (now (xs ∷ yss))
-    there : ∀ {xs xss yss} → BadSubseq xss yss → BadSubseq (now (xs ∷ xss)) yss
-    laterₗ : ∀ {xss yss} → ∞ (BadSubseq (♭ xss) yss) → BadSubseq (later xss) yss
-    laterᵣ : ∀ {xss yss} → ∞ (BadSubseq xss (♭ yss)) → BadSubseq xss (later yss)
+  module BadDefinition where
 
-  -- 関数uniqの結果が元の列に対しBadSubseqを満たす
-  uniq-xss-is-BadSubseq-of-xss : ∀ xss → BadSubseq xss (uniq xss)
-  uniq-xss-is-BadSubseq-of-xss = go-xss-is-BadSubseq-of-xss nothing where
-    -- goがBadSubseqを満たすこと
-    go-xss-is-BadSubseq-of-xss : ∀ mxs xss → BadSubseq xss (go mxs xss)
-    go-xss-is-BadSubseq-of-xss mxs (now []) = nil
-    go-xss-is-BadSubseq-of-xss mxs (now (xs ∷ now [])) with mxs ≟ just xs
-    go-xss-is-BadSubseq-of-xss mxs (now (xs ∷ now [])) | yes p = there nil
-    go-xss-is-BadSubseq-of-xss mxs (now (xs ∷ now [])) | no ¬p = here nil
-    go-xss-is-BadSubseq-of-xss mxs (now (xs ∷ now (ys ∷ yss))) with mxs ≟ just xs
-    go-xss-is-BadSubseq-of-xss mxs (now (xs ∷ now (ys ∷ yss))) | yes p = there (go-xss-is-BadSubseq-of-xss mxs (now (ys ∷ yss)))
-    go-xss-is-BadSubseq-of-xss mxs (now (xs ∷ now (ys ∷ yss))) | no ¬p = here (go-xss-is-BadSubseq-of-xss (just xs) (now (ys ∷ yss)))
-    go-xss-is-BadSubseq-of-xss mxs (now (xs ∷ later xss)) with mxs ≟ just xs
-    go-xss-is-BadSubseq-of-xss mxs (now (xs ∷ later xss)) | yes p = there (laterₗ (♯ laterᵣ (♯ (go-xss-is-BadSubseq-of-xss mxs (♭ xss)))))
-    go-xss-is-BadSubseq-of-xss mxs (now (xs ∷ later xss)) | no ¬p = here (laterₗ (♯ laterᵣ (♯ (go-xss-is-BadSubseq-of-xss (just xs) (♭ xss)))))
-    go-xss-is-BadSubseq-of-xss mxs (later x) = laterₗ (♯ laterᵣ (♯ go-xss-is-BadSubseq-of-xss mxs (♭ x)))
+    -- 入力の部分列になっている性質 Subseq (ただし，この定義には問題がある．後述)
+    data Subseq : [ String ] → [ String ] → Set where
+      nil : Subseq (now []) (now [])
+      here : ∀ {xs xss yss} → Subseq xss yss → Subseq (now (xs ∷ xss)) (now (xs ∷ yss))
+      there : ∀ {xs xss yss} → Subseq xss yss → Subseq (now (xs ∷ xss)) yss
+      laterₗ : ∀ {xss yss} → ∞ (Subseq (♭ xss) yss) → Subseq (later xss) yss
+      laterᵣ : ∀ {xss yss} → ∞ (Subseq xss (♭ yss)) → Subseq xss (later yss)
 
-  as : [ String ]
-  as = now ("a" ∷ later (♯ as))
+    -- 関数uniqの結果が元の列に対しSubseqを満たす
+    uniq-xss-is-Subseq-of-xss : ∀ xss → Subseq xss (uniq xss)
+    uniq-xss-is-Subseq-of-xss = shrink-xss-is-Subseq-of-xss nothing where
+      -- shrinkがSubseqを満たすこと
+      shrink-xss-is-Subseq-of-xss : ∀ prev xss → Subseq xss (shrink prev xss)
+      shrink-xss-is-Subseq-of-xss prev (now []) = nil
+      shrink-xss-is-Subseq-of-xss prev (now (xs ∷ now [])) with prev ≟ just xs
+      shrink-xss-is-Subseq-of-xss prev (now (xs ∷ now [])) | yes p = there nil
+      shrink-xss-is-Subseq-of-xss prev (now (xs ∷ now [])) | no ¬p = here nil
+      shrink-xss-is-Subseq-of-xss prev (now (xs ∷ now (ys ∷ yss))) with prev ≟ just xs
+      shrink-xss-is-Subseq-of-xss prev (now (xs ∷ now (ys ∷ yss))) | yes p = there (shrink-xss-is-Subseq-of-xss prev (now (ys ∷ yss)))
+      shrink-xss-is-Subseq-of-xss prev (now (xs ∷ now (ys ∷ yss))) | no ¬p = here (shrink-xss-is-Subseq-of-xss (just xs) (now (ys ∷ yss)))
+      shrink-xss-is-Subseq-of-xss prev (now (xs ∷ later xss)) with prev ≟ just xs
+      shrink-xss-is-Subseq-of-xss prev (now (xs ∷ later xss)) | yes p = there (laterₗ (♯ laterᵣ (♯ (shrink-xss-is-Subseq-of-xss prev (♭ xss)))))
+      shrink-xss-is-Subseq-of-xss prev (now (xs ∷ later xss)) | no ¬p = here (laterₗ (♯ laterᵣ (♯ (shrink-xss-is-Subseq-of-xss (just xs) (♭ xss)))))
+      shrink-xss-is-Subseq-of-xss prev (later x) = laterₗ (♯ laterᵣ (♯ shrink-xss-is-Subseq-of-xss prev (♭ x)))
 
-  bs : [ String ]
-  bs = now ("b" ∷ later (♯ bs))
+    as : [ String ]
+    as = now ("a" ∷ later (♯ as))
 
-  -- これがダメな(「ダメとしたい」)やつだけど弾けない，
-  -- 無限である以上「いつか来るかもしれない」ため仕方ないのだがー
-  bad-prop : BadSubseq as bs
-  bad-prop = there (laterₗ (♯ bad-prop))
-  -- どうにかするならData.Colist.Finiteみたいな性質を[_]にも定義し，
-  -- BadSubseqを定めるための前提条件にするとかになる．
-  -- ただ出元がIOだとその性質は証明できないんだけどね．
+    bs : [ String ]
+    bs = now ("b" ∷ later (♯ bs))
+
+    -- これがダメな(「ダメとしたい」)やつだけど弾けない，
+    -- 無限である以上「いつか来るかもしれない」ため仕方ないのだがー
+    bad-prop : Subseq as bs
+    bad-prop = there (laterₗ (♯ bad-prop))
+    -- どうにかするならData.Colist.Finiteみたいな性質を[_]にも定義し，
+    -- Subseqを定めるための前提条件にするとかになる．
+    -- ただ出元がIOだとその性質は証明できないんだけどね．
 
   -- というかそもそもSubseqなら有限の場合のみでしか，
   -- その性質の意味が無いんだから，Finiteは仮定していい
@@ -129,71 +135,52 @@ module Properties where
   -- uniq-xss-is-Subseq-of-xss : ∀ xss → Subseq xss (uniq xss)
   -- uniq-xss-is-Subseq-of-xss = ?
 
-  go[]-is-[] : ∀ mxs xss → xss E.⇓ [] → go mxs xss E.⇓ []
-  go[]-is-[] mxs ._ (Equality.now x∼y) rewrite x∼y = Equality.now PropEq.refl
-  go[]-is-[] mxs ._ (Equality.laterˡ {x = x} x₁) = Equality.laterˡ (go[]-is-[] mxs (♭ x) x₁)
+  shrink-xss≈shrink-whnf-xss : ∀ prev xss yss → xss E.⇓ yss → shrink prev xss E.≈ shrink prev (now yss)
+  shrink-xss≈shrink-whnf-xss prev .(now yss) yss (Equality.now PropEq.refl) = Equivalence.refl PropEq.refl where open Equivalence
+  shrink-xss≈shrink-whnf-xss prev ._ yss (Equality.laterˡ {x = xss} e) = Equality.laterˡ (shrink-xss≈shrink-whnf-xss prev (♭ xss) yss e)
 
-  go-xss≈go-whnf-xss : ∀ mxs xss yss → xss E.⇓ yss → go mxs xss E.≈ go mxs (now yss)
-  go-xss≈go-whnf-xss mxs .(now yss) yss (Equality.now PropEq.refl) = Equivalence.refl PropEq.refl where open Equivalence
-  go-xss≈go-whnf-xss mxs ._ yss (Equality.laterˡ {x = xss} e) = Equality.laterˡ (go-xss≈go-whnf-xss mxs (♭ xss) yss e)
+  -- 有限リストに対するshrink prevはWHNFを持つ
+  shrink-finite-has-whnf : ∀ {xss} → (prev : Maybe String) → Finite xss → ∃ λ yss → shrink prev xss E.⇓ yss
+  shrink-finite-has-whnf prev [] = [] , Equality.now PropEq.refl
+  shrink-finite-has-whnf prev (x ∷ []) with prev ≟ just x
+  shrink-finite-has-whnf prev (x ∷ []) | yes p = [] , Equality.now PropEq.refl
+  shrink-finite-has-whnf prev (x ∷ []) | no ¬p = x ∷ now [] , Equality.now PropEq.refl
+  shrink-finite-has-whnf prev (x ∷ (x₁ ∷ fin)) with prev ≟ just x
+  shrink-finite-has-whnf prev (x ∷ (x₁ ∷ fin)) | yes p = shrink-finite-has-whnf prev (x₁ ∷ fin)
+  shrink-finite-has-whnf prev (x ∷ (_∷_  x₁ {xss} fin)) | no ¬p = (x ∷ shrink (just x) (now (x₁ ∷ xss))) , Equality.now PropEq.refl
+  shrink-finite-has-whnf prev (x ∷ later {xs} fin) with prev ≟ just x
+  shrink-finite-has-whnf prev (x ∷ later {xs} fin) | yes p = shrink-finite-has-whnf prev (later fin)
+  shrink-finite-has-whnf prev (x ∷ later {xs} fin) | no ¬p = x ∷ shrink (just x) (later xs) , Equality.now PropEq.refl
+  shrink-finite-has-whnf prev (later {xs} (ys , finys , proj₃)) with shrink-finite-has-whnf prev proj₃
+  ... | p = proj₁ p , Equivalence.trans PropEq.trans (shrink-xss≈shrink-whnf-xss prev (later xs) ys finys) (proj₂ p) where open Equivalence
 
-  finite-go-has-whnf : ∀ {xss} → (mxs : Maybe String) → Finite xss → ∃ λ yss → go mxs xss E.⇓ yss
-  finite-go-has-whnf mxs [] = [] , Equality.now PropEq.refl
-  finite-go-has-whnf mxs (x ∷ []) with mxs ≟ just x
-  finite-go-has-whnf mxs (x ∷ []) | yes p = [] , Equality.now PropEq.refl
-  finite-go-has-whnf mxs (x ∷ []) | no ¬p = x ∷ now [] , Equality.now PropEq.refl
-  finite-go-has-whnf mxs (x ∷ (x₁ ∷ fin)) with mxs ≟ just x
-  finite-go-has-whnf mxs (x ∷ (x₁ ∷ fin)) | yes p = finite-go-has-whnf mxs (x₁ ∷ fin)
-  finite-go-has-whnf mxs (x ∷ (_∷_  x₁ {xss} fin)) | no ¬p = (x ∷ go (just x) (now (x₁ ∷ xss))) , Equality.now PropEq.refl
-  finite-go-has-whnf mxs (x ∷ later {xs} fin) with mxs ≟ just x
-  finite-go-has-whnf mxs (x ∷ later {xs} fin) | yes p = finite-go-has-whnf mxs (later fin)
-  finite-go-has-whnf mxs (x ∷ later {xs} fin) | no ¬p = x ∷ go (just x) (later xs) , Equality.now PropEq.refl
-  finite-go-has-whnf mxs (later {xs} (ys , finys , proj₃)) with finite-go-has-whnf mxs proj₃
-  ... | p = proj₁ p , Equivalence.trans PropEq.trans (go-xss≈go-whnf-xss mxs (later xs) ys finys) (proj₂ p) where open Equivalence
-
-  finite-uniq-has-whnf : ∀ {xss} → Finite xss → ∃ λ yss → uniq xss E.⇓ yss
-  finite-uniq-has-whnf = finite-go-has-whnf nothing
-
-  later-keep-Finite : ∀ {a} {A : Set a} {xss : [ A ]} → Finite xss → Finite (later (♯ xss))
-  later-keep-Finite [] = later ([] , Equality.laterˡ (Equality.now PropEq.refl) , [])
-  later-keep-Finite (_∷_ x {xs} fin) = later (x ∷ xs , Equality.laterˡ (Equality.now PropEq.refl) , x ∷ fin)
-  later-keep-Finite (later (proj₁ , proj₂ , proj₃)) = later (proj₁ , Equality.laterˡ proj₂ , proj₃)
-
-  later-keep-Finite' : ∀ {a} {A : Set a} {xss : [ A ]} → Finite (later (♯ xss)) → Finite xss
-  later-keep-Finite' (later (.[] , Equality.laterˡ (Equality.now PropEq.refl) , [])) = []
-  later-keep-Finite' (later (.[] , Equality.laterˡ (Equality.laterˡ proj₂) , [])) = later ([] , Equality.laterˡ proj₂ , [])
-  later-keep-Finite' (later (._ , Equality.laterˡ (Equality.now PropEq.refl) , x ∷ proj₃)) = x ∷ proj₃
-  later-keep-Finite' (later (._ , Equality.laterˡ (Equality.laterˡ proj₂) , _∷_ x {xs} proj₃)) = later (x ∷ xs , Equality.laterˡ proj₂ , x ∷ proj₃)
-
-  go-finite-is-finite : ∀ {xss} → (mxs : Maybe String) → Finite xss → Finite (go mxs xss)
-  go-finite-is-finite mxs [] = []
-  go-finite-is-finite mxs (x ∷ []) with mxs ≟ just x
-  go-finite-is-finite mxs (x ∷ []) | yes p = []
-  go-finite-is-finite mxs (x ∷ []) | no ¬p = x ∷ []
-  go-finite-is-finite mxs (x ∷ (x₁ ∷ fin)) with mxs ≟ just x
-  go-finite-is-finite mxs (x ∷ (x₁ ∷ fin)) | yes p = go-finite-is-finite mxs (x₁ ∷ fin)
-  go-finite-is-finite mxs (x ∷ (x₁ ∷ fin)) | no ¬p = x ∷ go-finite-is-finite (just x) (x₁ ∷ fin)
-  go-finite-is-finite mxs (x ∷ later fin) with mxs ≟ just x
-  go-finite-is-finite mxs (x ∷ later fin) | yes p = go-finite-is-finite mxs (later fin)
-  go-finite-is-finite mxs (x ∷ later fin) | no ¬p = x ∷ go-finite-is-finite (just x) (later fin)
-  go-finite-is-finite mxs (later {xs} (ys , xs⇓ys , finys)) = later (proj₁ yy , Equivalence.trans PropEq.trans xx (proj₂ yy) , lemma (go mxs (now ys)) (proj₁ yy) (proj₂ yy) yyy) where
+  -- 有限リストに対するshrink prevは有限リスト
+  shrink-finite-is-finite : ∀ {xss} → (prev : Maybe String) → Finite xss → Finite (shrink prev xss)
+  shrink-finite-is-finite prev [] = []
+  shrink-finite-is-finite prev (x ∷ []) with prev ≟ just x
+  shrink-finite-is-finite prev (x ∷ []) | yes p = []
+  shrink-finite-is-finite prev (x ∷ []) | no ¬p = x ∷ []
+  shrink-finite-is-finite prev (x ∷ (x₁ ∷ fin)) with prev ≟ just x
+  shrink-finite-is-finite prev (x ∷ (x₁ ∷ fin)) | yes p = shrink-finite-is-finite prev (x₁ ∷ fin)
+  shrink-finite-is-finite prev (x ∷ (x₁ ∷ fin)) | no ¬p = x ∷ shrink-finite-is-finite (just x) (x₁ ∷ fin)
+  shrink-finite-is-finite prev (x ∷ later fin) with prev ≟ just x
+  shrink-finite-is-finite prev (x ∷ later fin) | yes p = shrink-finite-is-finite prev (later fin)
+  shrink-finite-is-finite prev (x ∷ later fin) | no ¬p = x ∷ shrink-finite-is-finite (just x) (later fin)
+  shrink-finite-is-finite prev (later {xs} (ys , xs⇓ys , finys)) = later (proj₁ whnf , Equivalence.trans PropEq.trans (shrink-xss≈shrink-whnf-xss prev (later xs) ys xs⇓ys) (proj₂ whnf) , lemma (shrink prev (now ys)) (proj₁ whnf) (proj₂ whnf) (shrink-finite-is-finite prev finys)) where
     open Equivalence
     open import Data.Unit
-    xx : go mxs (later xs) E.≈ go mxs (now ys)
-    xx = go-xss≈go-whnf-xss mxs (later xs) ys xs⇓ys
-    yy : ∃ λ zs → go mxs (now ys) E.⇓ zs
-    yy = finite-go-has-whnf mxs finys
-    yyy : Finite (go mxs (now ys))
-    yyy = go-finite-is-finite mxs finys
+    whnf : ∃ λ zs → shrink prev (now ys) E.⇓ zs
+    whnf = shrink-finite-has-whnf prev finys
     lemma : ∀ xs ys → xs E.⇓ ys → Finite xs → Finite (now ys)
     lemma .(now []) .[] (Equality.now PropEq.refl) [] = []
     lemma ._ ._ (Equality.now PropEq.refl) (x ∷ fin) = x ∷ fin
-    lemma ._ ys₁ xs⇓ys₁ (later (proj₁ , proj₂ , proj₃)) = lemma (now proj₁) ys₁ (Equivalence.trans PropEq.trans (Equivalence.sym sm tt proj₂) xs⇓ys₁) proj₃ where
-      sm : Symmetric _≡_
-      sm PropEq.refl = PropEq.refl
+    lemma ._ ys₁ xs⇓ys₁ (later (proj₁ , proj₂ , proj₃)) = lemma (now proj₁) ys₁ (Equivalence.trans PropEq.trans (Equivalence.sym sym-≡ tt proj₂) xs⇓ys₁) proj₃ where
+      sym-≡ : Symmetric _≡_
+      sym-≡ PropEq.refl = PropEq.refl
 
+  -- 有限リストに対するuniqも有限リスト
   uniq-finite-is-finite : ∀ {xss} → Finite xss → Finite (uniq xss)
-  uniq-finite-is-finite = go-finite-is-finite nothing
+  uniq-finite-is-finite = shrink-finite-is-finite nothing
 {-
   -- xssがFiniteならばSubseqも示せる(はず)
   uniq-xss-is-Subseq-of-xss : ∀ {xss} → (finxss : Finite xss) → Subseq finxss (uniq-finite-is-finite finxss)
