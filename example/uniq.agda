@@ -153,24 +153,48 @@ module Properties where
 
   finite-uniq-has-whnf : ∀ {xss} → Finite xss → ∃ λ yss → uniq xss E.⇓ yss
   finite-uniq-has-whnf = finite-go-has-whnf nothing
-{-
-  uniq-finite-is-finite : ∀ {xss} → Finite xss → Finite (uniq xss)
-  uniq-finite-is-finite = go-finite-is-finite nothing where
-    go-finite-is-finite : ∀ {xss} → (mxs : Maybe String) → Finite xss → Finite (go mxs xss)
-    go-finite-is-finite mxs [] = []
-    go-finite-is-finite mxs (x ∷ []) with mxs ≟ just x
-    go-finite-is-finite mxs (x ∷ []) | yes p = []
-    go-finite-is-finite mxs (x ∷ []) | no ¬p = x ∷ []
-    go-finite-is-finite mxs (x ∷ (x₁ ∷ fin)) with mxs ≟ just x
-    go-finite-is-finite mxs (x ∷ (x₁ ∷ fin)) | yes p = go-finite-is-finite mxs (x₁ ∷ fin)
-    go-finite-is-finite mxs (x ∷ (x₁ ∷ fin)) | no ¬p = x ∷ go-finite-is-finite (just x) (x₁ ∷ fin)
-    go-finite-is-finite mxs (x ∷ later fin) with mxs ≟ just x
-    go-finite-is-finite mxs (x ∷ later fin) | yes p = go-finite-is-finite mxs (later fin)
-    go-finite-is-finite mxs (x ∷ later fin) | no ¬p = x ∷ go-finite-is-finite (just x) (later fin)
-    go-finite-is-finite mxs (later {xs} fin) with finite-go-has-whnf mxs (later fin)
-    go-finite-is-finite mxs (Finite.later fin) | [] , proj₂ = {!!}
-    go-finite-is-finite mxs (Finite.later fin) | x ∷ xs₁ , proj₂ = {!!}
 
+  later-keep-Finite : ∀ {a} {A : Set a} {xss : [ A ]} → Finite xss → Finite (later (♯ xss))
+  later-keep-Finite [] = later ([] , Equality.laterˡ (Equality.now PropEq.refl) , [])
+  later-keep-Finite (_∷_ x {xs} fin) = later (x ∷ xs , Equality.laterˡ (Equality.now PropEq.refl) , x ∷ fin)
+  later-keep-Finite (later (proj₁ , proj₂ , proj₃)) = later (proj₁ , Equality.laterˡ proj₂ , proj₃)
+
+  later-keep-Finite' : ∀ {a} {A : Set a} {xss : [ A ]} → Finite (later (♯ xss)) → Finite xss
+  later-keep-Finite' (later (.[] , Equality.laterˡ (Equality.now PropEq.refl) , [])) = []
+  later-keep-Finite' (later (.[] , Equality.laterˡ (Equality.laterˡ proj₂) , [])) = later ([] , Equality.laterˡ proj₂ , [])
+  later-keep-Finite' (later (._ , Equality.laterˡ (Equality.now PropEq.refl) , x ∷ proj₃)) = x ∷ proj₃
+  later-keep-Finite' (later (._ , Equality.laterˡ (Equality.laterˡ proj₂) , _∷_ x {xs} proj₃)) = later (x ∷ xs , Equality.laterˡ proj₂ , x ∷ proj₃)
+
+  go-finite-is-finite : ∀ {xss} → (mxs : Maybe String) → Finite xss → Finite (go mxs xss)
+  go-finite-is-finite mxs [] = []
+  go-finite-is-finite mxs (x ∷ []) with mxs ≟ just x
+  go-finite-is-finite mxs (x ∷ []) | yes p = []
+  go-finite-is-finite mxs (x ∷ []) | no ¬p = x ∷ []
+  go-finite-is-finite mxs (x ∷ (x₁ ∷ fin)) with mxs ≟ just x
+  go-finite-is-finite mxs (x ∷ (x₁ ∷ fin)) | yes p = go-finite-is-finite mxs (x₁ ∷ fin)
+  go-finite-is-finite mxs (x ∷ (x₁ ∷ fin)) | no ¬p = x ∷ go-finite-is-finite (just x) (x₁ ∷ fin)
+  go-finite-is-finite mxs (x ∷ later fin) with mxs ≟ just x
+  go-finite-is-finite mxs (x ∷ later fin) | yes p = go-finite-is-finite mxs (later fin)
+  go-finite-is-finite mxs (x ∷ later fin) | no ¬p = x ∷ go-finite-is-finite (just x) (later fin)
+  go-finite-is-finite mxs (later {xs} (ys , xs⇓ys , finys)) = later (proj₁ yy , Equivalence.trans PropEq.trans xx (proj₂ yy) , lemma (go mxs (now ys)) (proj₁ yy) (proj₂ yy) yyy) where
+    open Equivalence
+    open import Data.Unit
+    xx : go mxs (later xs) E.≈ go mxs (now ys)
+    xx = go-xss≈go-whnf-xss mxs (later xs) ys xs⇓ys
+    yy : ∃ λ zs → go mxs (now ys) E.⇓ zs
+    yy = finite-go-has-whnf mxs finys
+    yyy : Finite (go mxs (now ys))
+    yyy = go-finite-is-finite mxs finys
+    lemma : ∀ xs ys → xs E.⇓ ys → Finite xs → Finite (now ys)
+    lemma .(now []) .[] (Equality.now PropEq.refl) [] = []
+    lemma ._ ._ (Equality.now PropEq.refl) (x ∷ fin) = x ∷ fin
+    lemma ._ ys₁ xs⇓ys₁ (later (proj₁ , proj₂ , proj₃)) = lemma (now proj₁) ys₁ (Equivalence.trans PropEq.trans (Equivalence.sym sm tt proj₂) xs⇓ys₁) proj₃ where
+      sm : Symmetric _≡_
+      sm PropEq.refl = PropEq.refl
+
+  uniq-finite-is-finite : ∀ {xss} → Finite xss → Finite (uniq xss)
+  uniq-finite-is-finite = go-finite-is-finite nothing
+{-
   -- xssがFiniteならばSubseqも示せる(はず)
   uniq-xss-is-Subseq-of-xss : ∀ {xss} → (finxss : Finite xss) → Subseq finxss (uniq-finite-is-finite finxss)
   uniq-xss-is-Subseq-of-xss = {!!}
