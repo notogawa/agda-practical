@@ -192,7 +192,39 @@ module Properties where
   Subseq-refl [] = nil
   Subseq-refl (x ∷ finxss) = here (Subseq-refl finxss)
   Subseq-refl (later (proj₁ , proj₂ , proj₃)) = laterₗ (laterᵣ (Subseq-refl proj₃))
-{-
+
+  Subseq-trans : ∀ {xss yss zss} {finxss : Finite xss} {finyss : Finite yss} {finzss : Finite zss} →
+                 Subseq finxss finyss → Subseq finyss finzss → Subseq finxss finzss
+  Subseq-trans nil yz = yz
+  Subseq-trans (here xy) yz = there xy
+  Subseq-trans (there xy) yz = there xy
+  Subseq-trans (laterₗ xy) yz = laterₗ (Subseq-trans xy yz)
+  Subseq-trans (laterᵣ xy) (laterₗ yz) = Subseq-trans xy yz
+  Subseq-trans (laterᵣ xy) (laterᵣ yz) = laterᵣ (Subseq-trans (laterᵣ xy) yz)
+
+  whnf-uniq : ∀ {xss yss zss} → xss E.⇓ yss → xss E.⇓ zss → yss ≡ zss
+  whnf-uniq (Equality.now PropEq.refl) (Equality.now PropEq.refl) = PropEq.refl
+  whnf-uniq (Equality.laterˡ eq1) (Equality.laterˡ eq2) = whnf-uniq eq1 eq2
+
+  eval-uniq : ∀ {xss yss} → (e1 : xss E.⇓ yss) → (e2 : xss E.⇓ yss) → e1 ≡ e2
+  eval-uniq (Equality.now PropEq.refl) (Equality.now PropEq.refl) = PropEq.refl
+  eval-uniq (Equality.laterˡ e1) (Equality.laterˡ e2) rewrite eval-uniq e1 e2 = PropEq.refl
+
+  inv-Finite : ∀ {xss : [ String ]} → (finxss : Finite xss) → (finyss : Finite xss) → finxss ≡ finyss
+  inv-Finite [] [] = PropEq.refl
+  inv-Finite (x ∷ finxss) (.x ∷ finyss) rewrite inv-Finite finxss finyss = PropEq.refl
+  inv-Finite (later (proj₁ , proj₂ , proj₃)) (later (proj₄ , proj₅ , proj₆)) with whnf-uniq proj₂ proj₅
+  inv-Finite (later (proj₁ , proj₂ , proj₃)) (later (.proj₁ , proj₅ , proj₆)) | PropEq.refl with inv-Finite proj₃ proj₆
+  inv-Finite (later (proj₁ , proj₂ , proj₃)) (later (.proj₁ , proj₅ , .proj₃)) | PropEq.refl | PropEq.refl with eval-uniq proj₂ proj₅
+  inv-Finite (later (proj₁ , proj₅ , proj₃)) (later (.proj₁ , .proj₅ , .proj₃)) | PropEq.refl | PropEq.refl | PropEq.refl = PropEq.refl
+
+  lemma : ∀ {xs ys} → (xs⇓ys : xs E.⇓ ys) → (finxs : Finite xs) → Subseq finxs (finite-whnf-is-finite xs⇓ys finxs)
+  lemma (Equality.now PropEq.refl) [] = nil
+  lemma (Equality.now PropEq.refl) (x ∷ finxs) = here (Subseq-refl finxs)
+  lemma xs⇓ys (later (proj₁ , proj₂ , proj₃)) with whnf-uniq xs⇓ys proj₂
+  lemma xs⇓ys (later (ys , proj₂ , finys)) | PropEq.refl with inv-Finite finys (finite-whnf-is-finite xs⇓ys (later (ys , proj₂ , finys)))
+  ... | p = laterₗ (PropEq.subst (Subseq finys) p (Subseq-refl finys))
+
   shrink-xss-is-Subseq-of-xss : ∀ {xss} → (prev : Maybe String) → (finxss : Finite xss) →
                                 Subseq finxss (shrink-finite-is-finite prev finxss)
   shrink-xss-is-Subseq-of-xss prev [] = nil
@@ -205,9 +237,12 @@ module Properties where
   shrink-xss-is-Subseq-of-xss prev (x ∷ later fin) with prev ≟ just x
   shrink-xss-is-Subseq-of-xss prev (x ∷ later fin) | yes p = there (Subseq-refl (later fin))
   shrink-xss-is-Subseq-of-xss prev (x ∷ later fin) | no ¬p = here (Subseq-refl (later fin))
-  shrink-xss-is-Subseq-of-xss prev (later (ys , xs⇓ys , finys)) = laterₗ (laterᵣ {!!})
+  shrink-xss-is-Subseq-of-xss prev (later (ys , xs⇓ys , finys)) = laterₗ (laterᵣ (Subseq-trans trans1 trans2)) where
+    trans1 : Subseq finys (shrink-finite-is-finite prev finys)
+    trans1 = shrink-xss-is-Subseq-of-xss prev finys
+    trans2 : Subseq (shrink-finite-is-finite prev finys) (finite-whnf-is-finite (proj₂ (shrink-finite-has-whnf prev finys)) (shrink-finite-is-finite prev finys))
+    trans2 = lemma (proj₂ (shrink-finite-has-whnf prev finys)) (shrink-finite-is-finite {now ys} prev finys)
 
   -- xssがFiniteならばSubseqも示せる(はず)
   uniq-xss-is-Subseq-of-xss : ∀ {xss} → (finxss : Finite xss) → Subseq finxss (uniq-finite-is-finite finxss)
   uniq-xss-is-Subseq-of-xss = shrink-xss-is-Subseq-of-xss nothing
--}
