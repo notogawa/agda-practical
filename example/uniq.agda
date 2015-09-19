@@ -139,9 +139,9 @@ module Properties where
   -- uniq-xss-is-Subseq-of-xss : ∀ xss → Subseq xss (uniq xss)
   -- uniq-xss-is-Subseq-of-xss = ?
 
-  shrink-xss≈shrink-whnf-xss : ∀ prev xss yss → xss E.⇓ yss → shrink prev xss E.≈ shrink prev (now yss)
-  shrink-xss≈shrink-whnf-xss prev .(now yss) yss (Equality.now PropEq.refl) = Equivalence.refl PropEq.refl where open Equivalence
-  shrink-xss≈shrink-whnf-xss prev ._ yss (Equality.laterˡ {x = xss} e) = Equality.laterˡ (shrink-xss≈shrink-whnf-xss prev (♭ xss) yss e)
+  shrink-xss≈shrink-whnf-xss : ∀ {xss yss} prev → xss E.⇓ yss → shrink prev xss E.≈ shrink prev (now yss)
+  shrink-xss≈shrink-whnf-xss prev (Equality.now PropEq.refl) = Equivalence.refl PropEq.refl where open Equivalence
+  shrink-xss≈shrink-whnf-xss prev (Equality.laterˡ {x = xss} e) = Equality.laterˡ (shrink-xss≈shrink-whnf-xss prev e)
 
   -- 有限リストに対するshrink prevはWHNFを持つ
   shrink-finite-has-whnf : ∀ {xss} → (prev : Maybe String) → Finite xss → ∃ λ yss → shrink prev xss E.⇓ yss
@@ -156,7 +156,16 @@ module Properties where
   shrink-finite-has-whnf prev (x ∷ later {xs} fin) | yes p = shrink-finite-has-whnf prev (later fin)
   shrink-finite-has-whnf prev (x ∷ later {xs} fin) | no ¬p = x ∷ shrink (just x) (later xs) , Equality.now PropEq.refl
   shrink-finite-has-whnf prev (later {xs} (ys , finys , proj₃)) with shrink-finite-has-whnf prev proj₃
-  ... | p = proj₁ p , Equivalence.trans PropEq.trans (shrink-xss≈shrink-whnf-xss prev (later xs) ys finys) (proj₂ p) where open Equivalence
+  ... | p = proj₁ p , Equivalence.trans PropEq.trans (shrink-xss≈shrink-whnf-xss prev finys) (proj₂ p) where open Equivalence
+
+  -- 有限リストのWHNFも有限リスト
+  finite-whnf-is-finite : ∀ {xs ys} → xs E.⇓ ys → Finite xs → Finite (now ys)
+  finite-whnf-is-finite (Equality.now PropEq.refl) [] = []
+  finite-whnf-is-finite (Equality.now PropEq.refl) (x ∷ fin) = x ∷ fin
+  finite-whnf-is-finite xs⇓ys (later (proj₁ , proj₂ , proj₃)) = finite-whnf-is-finite (Equivalence.trans PropEq.trans (Equivalence.sym sym-≡ tt proj₂) xs⇓ys) proj₃ where
+    open import Data.Unit
+    sym-≡ : Symmetric _≡_ -- どっかになかったっけ
+    sym-≡ PropEq.refl = PropEq.refl
 
   -- 有限リストに対するshrink prevは有限リスト
   shrink-finite-is-finite : ∀ {xss} → (prev : Maybe String) → Finite xss → Finite (shrink prev xss)
@@ -170,17 +179,10 @@ module Properties where
   shrink-finite-is-finite prev (x ∷ later fin) with prev ≟ just x
   shrink-finite-is-finite prev (x ∷ later fin) | yes p = shrink-finite-is-finite prev (later fin)
   shrink-finite-is-finite prev (x ∷ later fin) | no ¬p = x ∷ shrink-finite-is-finite (just x) (later fin)
-  shrink-finite-is-finite prev (later {xs} (ys , xs⇓ys , finys)) = later (proj₁ whnf , Equivalence.trans PropEq.trans (shrink-xss≈shrink-whnf-xss prev (later xs) ys xs⇓ys) (proj₂ whnf) , lemma (shrink prev (now ys)) (proj₁ whnf) (proj₂ whnf) (shrink-finite-is-finite prev finys)) where
+  shrink-finite-is-finite prev (later {xs} (ys , xs⇓ys , finys)) = later (proj₁ whnf , Equivalence.trans PropEq.trans (shrink-xss≈shrink-whnf-xss prev xs⇓ys) (proj₂ whnf) , finite-whnf-is-finite (proj₂ whnf) (shrink-finite-is-finite prev finys)) where
     open Equivalence
-    open import Data.Unit
     whnf : ∃ λ zs → shrink prev (now ys) E.⇓ zs
     whnf = shrink-finite-has-whnf prev finys
-    lemma : ∀ xs ys → xs E.⇓ ys → Finite xs → Finite (now ys)
-    lemma .(now []) .[] (Equality.now PropEq.refl) [] = []
-    lemma ._ ._ (Equality.now PropEq.refl) (x ∷ fin) = x ∷ fin
-    lemma ._ ys₁ xs⇓ys₁ (later (proj₁ , proj₂ , proj₃)) = lemma (now proj₁) ys₁ (Equivalence.trans PropEq.trans (Equivalence.sym sym-≡ tt proj₂) xs⇓ys₁) proj₃ where
-      sym-≡ : Symmetric _≡_
-      sym-≡ PropEq.refl = PropEq.refl
 
   -- 有限リストに対するuniqも有限リスト
   uniq-finite-is-finite : ∀ {xss} → Finite xss → Finite (uniq xss)
@@ -203,7 +205,7 @@ module Properties where
   shrink-xss-is-Subseq-of-xss prev (x ∷ later fin) with prev ≟ just x
   shrink-xss-is-Subseq-of-xss prev (x ∷ later fin) | yes p = there (Subseq-refl (later fin))
   shrink-xss-is-Subseq-of-xss prev (x ∷ later fin) | no ¬p = here (Subseq-refl (later fin))
-  shrink-xss-is-Subseq-of-xss prev (later {xs} (ys , xs⇓ys , finys)) = laterₗ {!!}
+  shrink-xss-is-Subseq-of-xss prev (later (ys , xs⇓ys , finys)) = laterₗ (laterᵣ {!!})
 
   -- xssがFiniteならばSubseqも示せる(はず)
   uniq-xss-is-Subseq-of-xss : ∀ {xss} → (finxss : Finite xss) → Subseq finxss (uniq-finite-is-finite finxss)
