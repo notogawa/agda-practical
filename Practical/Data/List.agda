@@ -76,23 +76,25 @@ map f (later xs)     = later (♯ map f (♭ xs))
 concatMap : ∀ {a b} {A : Set a} {B : Set b} → (A → [ B ]) → [ A ] → [ B ]
 concatMap f = concat ∘ map f
 
-monad : ∀ {a} → RawMonad {a} [_]
-monad = record
-  { return = λ x → now (x ∷ now [])
-  ; _>>=_ = λ xs f → concatMap f xs
-  }
+instance
 
-monadZero : ∀ {a} → RawMonadZero {a} [_]
-monadZero = record
-  { monad = monad
-  ; ∅     = now []
-  }
+  monad : ∀ {a} → RawMonad {a} [_]
+  monad = record
+    { return = λ x → now (x ∷ now [])
+    ; _>>=_ = λ xs f → concatMap f xs
+    }
 
-monadPlus : ∀ {a} → RawMonadPlus {a} [_]
-monadPlus = record
-  { monadZero = monadZero
-  ; _∣_       = _++_
-  }
+  monadZero : ∀ {a} → RawMonadZero {a} [_]
+  monadZero = record
+    { monad = monad
+    ; ∅     = now []
+    }
+
+  monadPlus : ∀ {a} → RawMonadPlus {a} [_]
+  monadPlus = record
+    { monadZero = monadZero
+    ; _∣_       = _++_
+    }
 
 module WithBool where
   open import Data.Bool using (Bool; true; false)
