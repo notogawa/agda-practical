@@ -18,13 +18,12 @@ open import Category.Monad
 open import Category.Monad.Partiality using (_⊥; now; later)
 
 -- List 自体と，その cdr に _⊥ を挟んだもの
-mutual
-  data [_]' {a} (A : Set a) : Set a where
-    []    : [ A ]'
-    _∷_   : (x : A) (xs : [ A ]) → [ A ]'
+data [_]' {a} (A : Set a) : Set a where
+  []    : [ A ]'
+  _∷_   : (x : A) (xs : [ A ]' ⊥) → [ A ]'
 
-  [_] : ∀ {a} → Set a → Set a
-  [ A ] = [ A ]' ⊥
+[_] : ∀ {a} → Set a → Set a
+[ A ] = [ A ]' ⊥
 
 infixr 5 _++_
 
