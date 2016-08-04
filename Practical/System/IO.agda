@@ -24,10 +24,10 @@ putStrLn : String → IO ⊤
 putStrLn str = void (♯ putStr str >>= λ _ → ♯ putChar '\n')
 
 getContents : IO String
-getContents = ♯ StdIO.getContents >>= ♯_ ∘ return ∘ fromColist
+getContents = ♯ StdIO.getContents >>= λ x → ♯ (return ∘ fromColist $ x)
 
 interact : (String → String) → IO ⊤
-interact f = ♯ StdIO.getContents >>= ♯_ ∘ void ∘ mapM putChar ∘ f ∘ fromColist where
+interact f = ♯ StdIO.getContents >>= λ x → ♯ (void ∘ mapM putChar ∘ f ∘ fromColist $ x) where
   open import Function
   open import Data.List using ([_])
   open import Data.String using (fromList)

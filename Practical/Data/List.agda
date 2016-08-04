@@ -139,7 +139,7 @@ module WithConat where
   open import Data.Conat
 
   length : ∀ {a} {A : Set a} → [ A ] → Coℕ ⊥
-  length = foldr (λ a b → suc ∘ ♯_ <$> b) (now zero) where
+  length = foldr (λ a b → (λ x → suc (♯ x)) <$> b) (now zero) where
     open RawMonad (Category.Monad.Partiality.monad) using (_<$>_)
 
   replicate : ∀ {a} {A : Set a} → Coℕ → A → [ A ]
@@ -214,7 +214,7 @@ module WithColist where
   fromColist (x ∷ xs) = now (x ∷ later (♯ fromColist (♭ xs)))
 
   toColist : ∀ {a} {A : Set a} → [ A ] → Colist A ⊥
-  toColist = foldr (λ a b → (_∷_ a) ∘ ♯_ <$> b) (now []) where
+  toColist = foldr (λ a b → (λ x → a ∷ (♯ x)) <$> b) (now []) where
     open RawMonad (Category.Monad.Partiality.monad) using (_<$>_)
 
 open WithColist public
