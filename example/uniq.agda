@@ -246,3 +246,29 @@ module Properties where
   -- xssがFiniteならばSubseqも示せる(はず)
   uniq-xss-is-Subseq-of-xss : ∀ {xss} → (finxss : Finite xss) → Subseq finxss (uniq-finite-is-finite finxss)
   uniq-xss-is-Subseq-of-xss = shrink-xss-is-Subseq-of-xss nothing
+
+  -- uniqはHangしないことが確かめられる
+  {-
+  uniq-is-Active : Active uniq
+  uniq-is-Active {xs} finxs = now ("a" ∷ now ("b" ∷ now ("c" ∷ now []))) , "b" , go finxs where
+    shrink-just-a-b∷as≡uniq-b∷as : ∀ a b as → a ≢ b → shrink (just a) (now (b Practical.∷ as)) ≡ uniq (now (b Practical.∷ as))
+    shrink-just-a-b∷as≡uniq-b∷as a b as neq with just a ≟ just b
+    shrink-just-a-b∷as≡uniq-b∷as a b as neq | yes (just a≈b) with neq a≈b
+    shrink-just-a-b∷as≡uniq-b∷as a b as neq | yes (just a≈b) | ()
+    shrink-just-a-b∷as≡uniq-b∷as a b as neq | no ¬p = PropEq.refl
+
+    go : ∀ {xs} → Finite xs → "b" ∈ uniq (xs Practical.++ now ("a" ∷ now ("b" ∷ now ("c" ∷ now []))) Practical.++ never)
+    go [] = there here
+    go (x ∷ []) with just "b" ≟ just x
+    go (."b" ∷ []) | yes (just PropEq.refl) = here
+    go (x ∷ []) | no ¬p with just x ≟ just "a"
+    go (."a" ∷ []) | no ¬p | yes (just PropEq.refl) = there here
+    go (x ∷ []) | no ¬p₁ | no ¬p = there (there here)
+    go (x₁ ∷ (x ∷ finxs₁)) with just "b" ≟ just x₁
+    go (."b" ∷ (x ∷ finxs₁)) | yes (just PropEq.refl) = here
+    go (x₁ ∷ (x ∷ finxs₁)) | no ¬p with just x₁ ≟ just x
+    go (x₁ ∷ (.x₁ ∷ finxs₁)) | no ¬p | yes (just PropEq.refl) = there {!!}
+    go (x₁ ∷ (x ∷ finxs₁)) | no ¬p₁ | no ¬p = there (go (x ∷ finxs₁))
+    go (x ∷ later x₁) = {!!}
+    go (later x) = {!!}
+  -}
